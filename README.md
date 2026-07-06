@@ -1,12 +1,12 @@
 # EdgeKeeper
 
-EdgeKeeper is a proof-aware trading-agent cockpit for World Cup football markets. It ingests TxLINE odds and score snapshots, detects agent-facing signals, runs deterministic risk checks, marks simulated positions against TxLINE odds/probabilities, and emits compact decision receipts for replay and audit.
+EdgeKeeper is a proof-aware trading-agent cockpit for World Cup football markets. It ingests live TxLINE odds and score snapshots, detects agent-facing signals, runs deterministic risk checks, marks simulated positions against TxLINE odds/probabilities, and emits compact decision receipts for audit.
 
-This is not a betting app and not a real-money trading bot. Replay mode works without a wallet, TxLINE credentials, paid account, token purchase, or real funds.
+This is not a betting app and not a real-money trading bot. Judges do not need a wallet, paid account, token purchase, or real funds; the deployed demo uses EdgeKeeper-owned server-side TxLINE credentials.
 
 - Public demo: https://edgekeeper-kohl.vercel.app
 - Submission track: Trading Tools and Agents
-- Judge path: open `/cockpit`, click `Start Replay`, inspect signals, risk checks, simulated positions, and receipts.
+- Judge path: open `/cockpit`, inspect the live TxLINE fixture, wait for the automatic agent tick or click `Run Agent Tick`, then review the signal, risk decision, simulated position state, and receipt.
 - Source target: https://github.com/kooroot/Edgekeeper
 
 ## Product Boundary
@@ -48,15 +48,15 @@ The Trading Tools and Agents listing asks for a running agent or automated tool 
 
 | Official criterion | EdgeKeeper evidence |
 | --- | --- |
-| Core functionality and data ingestion | Server routes fetch TxLINE fixture, odds, and score snapshots; `/api/live-agent/[fixtureId]` executes a live strategy tick from those snapshots; replay mode uses TxLINE-shaped packets for deterministic judging. |
-| Autonomous operation | After `Start Replay`, the replay agent processes every packet without manual intervention. In live mode, the cockpit runs a server-side agent tick automatically every 60 seconds for the selected fixture. |
+| Core functionality and data ingestion | Server routes fetch live TxLINE fixture, odds, and score snapshots; `/api/live-agent/[fixtureId]` executes a live strategy tick from those snapshots. |
+| Autonomous operation | The cockpit runs a server-side agent tick automatically every 60 seconds for the selected fixture, with a manual `Run Agent Tick` button for demo-video timing. |
 | Logic and code architecture | Signal, risk, execution, live-agent, receipt, hashing, and normalizer modules are separated under `lib/` with Vitest coverage. |
 | Innovation and novelty | The product focuses on proof-aware agent observability: every pass, block, open, and close emits a replayable receipt. |
-| Production readiness | Bun/Next build passes, live mainnet TxLINE credentials run server-side on Vercel, secrets stay off the browser, and replay works without accounts. |
+| Production readiness | Bun/Next build passes, live mainnet TxLINE credentials run server-side on Vercel, secrets stay off the browser, and public routes return derived summaries rather than raw feed dumps. |
 
 Submission requirements covered:
 
-- Demo video: record `/cockpit` replay plus the live TxLINE snapshot tab.
+- Demo video: record `/cockpit` loading a live TxLINE fixture and running the automatic or manual live agent tick.
 - Public repo: https://github.com/kooroot/Edgekeeper
 - Application access: https://edgekeeper-kohl.vercel.app
 - Technical docs: [`docs/TECHNICAL.md`](docs/TECHNICAL.md)
@@ -80,24 +80,16 @@ EdgeKeeper is an agent cockpit and risk-analysis tool. It does not create market
 
 Its `OPEN_*` and `CLOSE` actions are internal simulation events only, marked against TxLINE-derived probabilities and decimal odds. There is no wallet/session flow, venue adapter, CLOB order construction, order posting, deposit/withdrawal path, or settlement redemption path.
 
-## Modes
+## Live Operation
 
-### Replay Mode
-
-Replay mode is the default judge demo path. It uses local seeded data under `data/replay/` and requires no credentials.
-
-The seeded fixture uses neutral placeholder teams, produces at least three signal families, opens and closes a simulated position, blocks at least one decision, and emits deterministic receipts.
-
-### Live Mode
-
-Live mode is optional. When server-only TxLINE credentials are configured, the cockpit can load live fixture, odds, and score summaries through EdgeKeeper API routes.
+The cockpit loads live fixture, odds, and score summaries through EdgeKeeper API routes backed by server-only TxLINE credentials. The browser never receives `TXLINE_JWT`, `TXLINE_API_TOKEN`, or wallet key material.
 
 Production is configured as:
 
 - primary: TxLINE mainnet
 - secondary fallback: TxLINE devnet
 
-Preview and local development can use devnet primary. The browser never receives `TXLINE_JWT`, `TXLINE_API_TOKEN`, or wallet key material.
+Preview and local development can use devnet primary. If credentials are missing, public live routes return a clear credentials error instead of substituting synthetic fixture data.
 
 ### TxLINE Endpoints Used
 
@@ -125,7 +117,6 @@ app/
     odds/[fixtureId]/route.ts
     scores/[fixtureId]/route.ts
     live-agent/[fixtureId]/route.ts
-    replay/[fixtureId]/route.ts
     receipts/[id]/route.ts
 components/
   landing/
@@ -133,17 +124,17 @@ components/
   common/
 lib/
   txline/    server-side client, tolerant normalizers, SSE helpers
-  replay/    seeded demo data and deterministic replay engine
+  replay/    internal deterministic test harness, disabled as a public data fallback
   agent/     signal, risk, simulated execution, receipt, state modules
   utils/     stable JSON, hashing, time helpers
-data/replay/
+data/replay/  internal test vectors only
 docs/
 tests/
 ```
 
 More detail is in [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
-## Replay Demo
+## Live Demo
 
 ```bash
 bun install
@@ -156,19 +147,17 @@ Then open:
 http://localhost:3000/cockpit
 ```
 
-Click `Start Replay`.
+The cockpit fetches fixtures from TxLINE through server routes. Select a fixture if needed, then wait for the automatic 60-second agent tick or click `Run Agent Tick`.
 
 Expected demo flow:
 
-1. Odds and score packets advance on the timeline.
-2. Signals appear for odds velocity, score-price divergence, momentum shift, and a guard condition.
-3. Risk checks pass or block each signal.
-4. A simulated position opens with entry decimal odds and implied probability.
-5. A later signal closes it with exit decimal odds, probability delta, and PnL.
-6. Decision receipts become clickable and viewable at `/receipts/[id]`.
-7. Open `Live TxLINE Snapshot` to see the deployed app run a server-side live agent tick every 60 seconds against the selected TxLINE fixture.
-
-The 1x replay completes in roughly 85 seconds. Use 5x or 20x for a faster walkthrough.
+1. Live fixture names and fixture ids appear from `GET /api/fixtures`.
+2. Odds and score summaries load from `GET /api/odds/[fixtureId]` and `GET /api/scores/[fixtureId]`.
+3. The live agent tick reads those snapshots server-side.
+4. The signal engine emits a decision such as stale-feed guard, suspension guard, odds movement, or live market scan.
+5. The risk engine deterministically passes or blocks the proposed action.
+6. The simulated execution engine updates internal position state when an action passes.
+7. A compact receipt is emitted with a TxLINE proof reference and deterministic hash.
 
 ## Environment
 
@@ -183,7 +172,7 @@ TXLINE_SECONDARY_API_ORIGIN=
 TXLINE_SECONDARY_NETWORK=
 TXLINE_SECONDARY_JWT=
 TXLINE_SECONDARY_API_TOKEN=
-NEXT_PUBLIC_DEFAULT_MODE=replay
+NEXT_PUBLIC_DEFAULT_MODE=live
 ```
 
 Production mainnet with devnet fallback:
@@ -230,7 +219,7 @@ bun run txline:issue:mainnet
 - Simulation only; no real-money betting.
 - No user wallet connection is required.
 - No order routing, CLOB posting, exchange integration, custody, deposits, or withdrawals.
-- No purchase, token, subscription, or account is required for replay mode.
+- No judge wallet, purchase, token, subscription, or account is required to view the deployed cockpit.
 - No official FIFA branding, logos, marks, tournament marks, or implied affiliation.
 - No public raw TxODDS data redistribution.
 - Receipts include normalized summaries and hashes, not full raw TxODDS response dumps.
@@ -248,15 +237,14 @@ Friction:
 
 - Response payloads can vary between PascalCase/camelCase and array/object shapes, so tolerant normalizers are necessary.
 - Odds selection labels are not always exactly `P1`, `DRAW`, `P2`, so the app needs selection mapping and unknown-market fallbacks.
-- Streaming support is useful, but a judge-friendly demo still needs a deterministic local replay path because review may happen after live match activity.
+- Streaming support is useful, but the snapshot endpoints are enough for a judge-friendly autonomous agent tick because review may happen when match activity is stale.
 
 ## Judge Demo Script
 
 1. Run `bun install`.
 2. Run `bun run dev`.
 3. Open `/cockpit`.
-4. Click `Start Replay`.
-5. Confirm at least three signal types appear.
-6. Confirm at least one blocked risk decision.
-7. Confirm one simulated position opens and later closes.
-8. Open a receipt drawer, copy or download the receipt JSON, and open the receipt detail page.
+4. Select a live TxLINE fixture if more than one is available.
+5. Click `Refresh Snapshot` or wait for the automatic load.
+6. Click `Run Agent Tick` or wait for the 60-second automatic tick.
+7. Confirm the signal, risk decision, simulated action state, and receipt hash are produced from the live fixture.

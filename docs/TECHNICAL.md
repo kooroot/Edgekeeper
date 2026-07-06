@@ -24,7 +24,7 @@ https://superteam.fun/earn/listing/trading-tools-and-agents/
 
 The project belongs in this track because it builds operator tooling around trading-agent decisions:
 
-- normalized live/replay football data ingestion
+- normalized live football data ingestion
 - signal detection over odds and score movement
 - explicit agent decision state
 - deterministic risk checks
@@ -37,17 +37,17 @@ It is not a `Prediction Markets and Settlement` project because it has no market
 
 | Criterion | Implementation evidence |
 | --- | --- |
-| Core Functionality & Data Ingestion | `app/api/fixtures`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. `app/api/live-agent/[fixtureId]` consumes live odds/scores snapshots and executes a defined strategy tick. Replay mode uses seeded TxLINE-shaped packets. |
-| Autonomous Operation | `lib/replay/replay-engine.ts` runs packet processing end-to-end once the replay is started. `components/cockpit/LiveSnapshotPanel.tsx` also runs the live agent tick automatically every 60 seconds for the selected fixture. |
+| Core Functionality & Data Ingestion | `app/api/fixtures`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch live TxLINE snapshots server-side and return normalized summaries. `app/api/live-agent/[fixtureId]` consumes live odds/scores snapshots and executes a defined strategy tick. |
+| Autonomous Operation | `components/cockpit/LiveSnapshotPanel.tsx` runs the live agent tick automatically every 60 seconds for the selected fixture, with a manual tick button for demo timing. |
 | Logic & Code Architecture | `lib/agent/signals.ts`, `risk.ts`, `execution.ts`, `receipt.ts`, `state.ts`, and `live-agent.ts` keep deterministic strategy logic isolated and testable. |
 | Innovation & Novelty | Decision receipts combine signal input hashes, risk decisions, actions, and proof references so agent behavior is replayable and auditable. |
-| Production Readiness | Vercel production uses server-only TxLINE mainnet credentials with devnet fallback; replay works credential-free; tests, lint, and build pass under Bun. |
+| Production Readiness | Vercel production uses server-only TxLINE mainnet credentials with devnet fallback; public routes do not substitute synthetic fixture data; tests, lint, and build pass under Bun. |
 
 ### Submission Artifacts
 
 - Live app: `https://edgekeeper-kohl.vercel.app`
 - Public repo: `https://github.com/kooroot/Edgekeeper`
-- Demo path: `/cockpit` -> `Start Replay` -> inspect signal feed, risk panel, execution ledger, and receipts.
+- Demo path: `/cockpit` -> select a live fixture -> inspect live market state -> run or wait for the agent tick -> inspect signal, risk decision, simulated action state, and receipt hash.
 - Technical docs: this document.
 - TxLINE feedback: see `README.md`.
 
@@ -68,23 +68,7 @@ Excluded surfaces:
 
 ## Data Flow
 
-### Replay
-
-```txt
-data/replay/*.json
-  -> lib/replay/sample-data.ts
-  -> tolerant normalizers
-  -> lib/replay/replay-engine.ts
-  -> signal engine
-  -> risk engine
-  -> simulated execution ledger
-  -> deterministic receipt engine
-  -> cockpit UI
-```
-
-Replay packets are intentionally local and deterministic. The demo includes odds movement, score updates, football stat changes, a suspended market packet, a blocked risk decision, an opened simulated position, a closed simulated position, and receipts.
-
-### Live Snapshot
+### Live Snapshot And Agent Tick
 
 ```txt
 browser
@@ -99,7 +83,7 @@ browser
   -> derived cockpit summaries
 ```
 
-The live UI never receives TxLINE JWTs, API tokens, or raw downloadable feed dumps.
+The live UI never receives TxLINE JWTs, API tokens, or raw downloadable feed dumps. If credentials are unavailable, the public routes return an explicit credentials error rather than a synthetic fixture fallback.
 
 ## TxLINE Client
 
@@ -242,11 +226,11 @@ Receipts intentionally exclude raw TxODDS response bodies.
 GET /api/fixtures
 GET /api/odds/[fixtureId]
 GET /api/scores/[fixtureId]
-GET /api/replay/[fixtureId]
+POST /api/live-agent/[fixtureId]
 GET /api/receipts/[id]
 ```
 
-The live routes return normalized summaries and metadata such as active network/fallback source. Replay and receipt routes are deterministic local demo surfaces.
+The live routes return normalized summaries and metadata such as active network/fallback source. `POST /api/live-agent/[fixtureId]` returns derived agent state and a compact receipt; full raw TxODDS responses are not exposed for download.
 
 ## Security And Secret Handling
 

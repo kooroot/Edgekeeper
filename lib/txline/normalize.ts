@@ -86,11 +86,11 @@ function normalizeSelection(value: unknown): NormalizedOddsPoint["selection"] {
   const original = toStringValue(value);
   const raw = original?.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (!raw) return "P1";
-  if (["1", "P1", "HOME", "H", "PARTICIPANT1", "TEAM1"].includes(raw)) {
+  if (["1", "P1", "HOME", "H", "PARTICIPANT1", "PART1", "TEAM1"].includes(raw)) {
     return "P1";
   }
   if (["X", "DRAW", "D", "TIE"].includes(raw)) return "DRAW";
-  if (["2", "P2", "AWAY", "A", "PARTICIPANT2", "TEAM2"].includes(raw)) {
+  if (["2", "P2", "AWAY", "A", "PARTICIPANT2", "PART2", "TEAM2"].includes(raw)) {
     return "P2";
   }
   return original ?? raw;
@@ -98,8 +98,8 @@ function normalizeSelection(value: unknown): NormalizedOddsPoint["selection"] {
 
 function selectionFromPriceName(value: unknown): NormalizedOddsPoint["selection"] {
   const raw = toStringValue(value)?.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (["HOME", "P1", "1", "PARTICIPANT1"].includes(raw ?? "")) return "P1";
-  if (["AWAY", "P2", "2", "PARTICIPANT2"].includes(raw ?? "")) return "P2";
+  if (["HOME", "P1", "1", "PARTICIPANT1", "PART1"].includes(raw ?? "")) return "P1";
+  if (["AWAY", "P2", "2", "PARTICIPANT2", "PART2"].includes(raw ?? "")) return "P2";
   if (["DRAW", "X", "TIE"].includes(raw ?? "")) return "DRAW";
   return normalizeSelection(value);
 }

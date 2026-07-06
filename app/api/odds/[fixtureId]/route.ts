@@ -1,5 +1,4 @@
-import { getDemoFixture, getDemoOddsUpdates } from "@/lib/replay/sample-data";
-import { getTxLineClients } from "@/lib/txline/client";
+import { getTxLineClient, getTxLineClients } from "@/lib/txline/client";
 import { summarizeOdds } from "@/lib/txline/live-summary";
 
 export const dynamic = "force-dynamic";
@@ -47,13 +46,16 @@ export async function GET(
     );
   }
 
-  const demo = getDemoFixture();
-  if (fixtureId !== demo.fixtureId) {
-    return Response.json({ error: "Unknown replay fixture" }, { status: 404 });
-  }
-
-  return Response.json({
-    mode: "replay",
-    ...summarizeOdds(getDemoOddsUpdates(), fixtureId),
-  });
+  const client = getTxLineClient();
+  return Response.json(
+    {
+      mode: "live",
+      network: client.network,
+      credentialsAvailable: false,
+      credentialsSource: client.credentialsSource,
+      error: "Server-only TxLINE credentials are required for live odds data",
+      ...summarizeOdds([], fixtureId),
+    },
+    { status: 503 },
+  );
 }

@@ -16,6 +16,7 @@ import type {
   NormalizedOddsPoint,
   NormalizedScoreUpdate,
 } from "@/lib/txline/types";
+import { isOutcomeSelection } from "@/lib/txline/live-summary";
 
 type StoredLiveAgentState = ReturnType<typeof createInitialAgentState> & {
   latestOdds: NormalizedOddsPoint[];
@@ -103,7 +104,8 @@ export function runLiveAgentTick({
   scores: NormalizedScoreUpdate[];
 }): LiveAgentTickResult {
   const state = stateForFixture(fixtureId);
-  const latestOdds = latestOddsSnapshot(odds);
+  const strategyOdds = odds.filter((point) => isOutcomeSelection(point.selection));
+  const latestOdds = latestOddsSnapshot(strategyOdds);
   const latestScore = latestScoreSnapshot(scores);
   const previousLatestOdds = state.latestOdds;
   const previousScore = state.latestScore;

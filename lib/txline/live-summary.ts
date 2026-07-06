@@ -26,6 +26,12 @@ export type LiveScoreSummary = {
   latest?: NormalizedScoreUpdate;
 };
 
+const OUTCOME_SELECTIONS = new Set(["P1", "DRAW", "P2"]);
+
+export function isOutcomeSelection(selection: string) {
+  return OUTCOME_SELECTIONS.has(selection);
+}
+
 function startMs(fixture: NormalizedFixture) {
   const parsed = fixture.startTime ? Date.parse(fixture.startTime) : Number.NaN;
   return Number.isFinite(parsed) ? parsed : 0;
@@ -71,7 +77,9 @@ export function buildLiveFixturePreview({
 
 export function summarizeOdds(points: NormalizedOddsPoint[], fixtureId: string): LiveOddsSummary {
   const latestBySelection = new Map<string, NormalizedOddsPoint>();
-  for (const point of points) {
+  const outcomePoints = points.filter((point) => isOutcomeSelection(point.selection));
+
+  for (const point of outcomePoints) {
     const key = `${point.market}:${point.selection}`;
     const previous = latestBySelection.get(key);
     if (!previous || point.ts > previous.ts) latestBySelection.set(key, point);

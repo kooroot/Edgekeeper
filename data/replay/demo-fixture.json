@@ -1,9 +1,9 @@
 {
-  "FixtureId": "edgekeeper-demo-001",
-  "Participant1": "Team Alpha",
-  "Participant2": "Team Beta",
+  "FixtureId": "18198205",
+  "Participant1": "Portugal",
+  "Participant2": "Spain",
   "Participant1IsHome": true,
   "StartTime": "2026-07-01T18:00:00.000Z",
   "Status": "In play",
-  "CompetitionId": "world-cup-football-demo"
+  "CompetitionId": "72"
 }

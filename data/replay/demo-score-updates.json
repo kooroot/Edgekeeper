@@ -1,6 +1,6 @@
 [
   {
-    "FixtureId": "edgekeeper-demo-001",
+    "FixtureId": "18198205",
     "Ts": 1782928800000,
     "Seq": 1,
     "PhaseId": 2,
@@ -21,7 +21,7 @@
     "Source": "replay"
   },
   {
-    "FixtureId": "edgekeeper-demo-001",
+    "FixtureId": "18198205",
     "Ts": 1782928835000,
     "Seq": 2,
     "PhaseId": 2,
@@ -38,11 +38,11 @@
       "7": 3,
       "8": 0
     },
-    "RawSummary": "Team Alpha pressure, three corners",
+    "RawSummary": "Portugal pressure, three corners",
     "Source": "replay"
   },
   {
-    "FixtureId": "edgekeeper-demo-001",
+    "FixtureId": "18198205",
     "Ts": 1782928850000,
     "Seq": 3,
     "PhaseId": 2,
@@ -59,11 +59,11 @@
       "7": 3,
       "8": 0
     },
-    "RawSummary": "Team Alpha goal, price barely confirmed",
+    "RawSummary": "Portugal goal, price barely confirmed",
     "Source": "replay"
   },
   {
-    "FixtureId": "edgekeeper-demo-001",
+    "FixtureId": "18198205",
     "Ts": 1782928885000,
     "Seq": 4,
     "PhaseId": 5,

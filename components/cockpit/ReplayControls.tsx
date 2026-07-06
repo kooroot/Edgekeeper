@@ -34,10 +34,10 @@ export function ReplayControls({
             type="button"
             onClick={onStart}
             className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-300 px-3 text-sm font-semibold text-black transition hover:bg-emerald-200"
-            title="Start Replay"
+            title="Start internal harness"
           >
             <Play className="h-4 w-4" />
-            Start Replay
+            Start Harness
           </button>
           <button
             type="button"

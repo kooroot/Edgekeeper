@@ -1,4 +1,3 @@
-import { getDemoFixture } from "@/lib/replay/sample-data";
 import { getTxLineClient, getTxLineClients } from "@/lib/txline/client";
 import { buildLiveFixturePreview } from "@/lib/txline/live-summary";
 
@@ -48,11 +47,19 @@ export async function GET() {
   }
 
   const client = getTxLineClient();
-  return Response.json({
-    mode: "replay",
-    credentialsAvailable: false,
-    credentialsSource: client.credentialsSource,
-    network: client.network,
-    fixtures: [getDemoFixture()],
-  });
+  return Response.json(
+    {
+      mode: "live",
+      credentialsAvailable: false,
+      credentialsSource: client.credentialsSource,
+      fetchedAt: Date.now(),
+      error: "Server-only TxLINE credentials are required for live fixture data",
+      ...buildLiveFixturePreview({
+        fixtures: [],
+        network: client.network,
+        freeTiers: client.config.freeServiceLevels,
+      }),
+    },
+    { status: 503 },
+  );
 }

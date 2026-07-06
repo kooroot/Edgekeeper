@@ -17,14 +17,8 @@ type FixturesResponse =
       credentialsSource: string;
       fallbackFrom?: string;
       fetchedAt: number;
+      error?: string;
     })
-  | {
-      mode: "replay";
-      credentialsAvailable: false;
-      credentialsSource: string;
-      network: string;
-      fixtures: NormalizedFixture[];
-    }
   | {
       mode: "live";
       credentialsAvailable: boolean;
@@ -52,7 +46,7 @@ function buildMarket(
   };
 }
 
-export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: NormalizedFixture }) {
+export function LiveSnapshotPanel() {
   const [fixturesResponse, setFixturesResponse] = useState<FixturesResponse | null>(null);
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [odds, setOdds] = useState<LiveOddsSummary | undefined>();
@@ -65,9 +59,9 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
 
   const fixtures = fixturesResponse?.fixtures ?? [];
   const selectedFixture =
-    fixtures.find((fixture) => fixture.fixtureId === selectedFixtureId) ?? fixtures[0] ?? fallbackFixture;
+    fixtures.find((fixture) => fixture.fixtureId === selectedFixtureId) ?? fixtures[0];
   const market = useMemo(
-    () => buildMarket(selectedFixture, odds, score),
+    () => (selectedFixture ? buildMarket(selectedFixture, odds, score) : undefined),
     [odds, score, selectedFixture],
   );
 
@@ -78,7 +72,7 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
       const response = await fetch("/api/fixtures", { cache: "no-store" });
       const body = (await response.json()) as FixturesResponse;
       setFixturesResponse(body);
-      if ("error" in body) setError(body.error);
+      if ("error" in body && body.error) setError(body.error);
       const nextFixtureId = body.fixtures?.[0]?.fixtureId ?? "";
       setSelectedFixtureId((current) => current || nextFixtureId);
     } catch (loadError) {
@@ -88,8 +82,8 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     }
   }, []);
 
-  const loadSnapshot = useCallback(async (fixtureId = selectedFixture.fixtureId) => {
-    if (!fixtureId || fixtureId === fallbackFixture.fixtureId) return;
+  const loadSnapshot = useCallback(async (fixtureId = selectedFixture?.fixtureId) => {
+    if (!fixtureId) return;
     setLoadingSnapshot(true);
     setError(null);
     try {
@@ -108,10 +102,10 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     } finally {
       setLoadingSnapshot(false);
     }
-  }, [fallbackFixture.fixtureId, selectedFixture.fixtureId]);
+  }, [selectedFixture?.fixtureId]);
 
-  const runAgentTick = useCallback(async (fixtureId = selectedFixture.fixtureId) => {
-    if (!fixtureId || fixtureId === fallbackFixture.fixtureId) return;
+  const runAgentTick = useCallback(async (fixtureId = selectedFixture?.fixtureId) => {
+    if (!fixtureId) return;
     setLoadingAgentTick(true);
     setError(null);
     try {
@@ -127,7 +121,7 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     } finally {
       setLoadingAgentTick(false);
     }
-  }, [fallbackFixture.fixtureId, selectedFixture.fixtureId]);
+  }, [selectedFixture?.fixtureId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -157,8 +151,9 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     };
   }, [fixturesResponse?.mode, runAgentTick, selectedFixtureId]);
 
-  const hasLiveData = fixturesResponse?.mode === "live";
-  const hasDirectCredentials = hasLiveData && fixturesResponse.credentialsAvailable === true;
+  const hasLiveResponse = fixturesResponse?.mode === "live";
+  const hasDirectCredentials = hasLiveResponse && fixturesResponse.credentialsAvailable === true;
+  const hasLiveData = hasLiveResponse && hasDirectCredentials;
 
   return (
     <section className="grid gap-4 xl:grid-cols-[minmax(320px,0.8fr)_minmax(420px,1.2fr)]">
@@ -171,7 +166,7 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
             </p>
           </div>
           <Badge tone={hasLiveData ? "green" : "amber"}>
-            {hasLiveData ? "LIVE DATA" : "REPLAY FALLBACK"}
+            {hasLiveData ? "LIVE DATA" : "NO LIVE DATA"}
           </Badge>
         </div>
 
@@ -193,8 +188,13 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
 
         <div className="flex flex-col gap-3">
           <select
-            value={selectedFixture.fixtureId}
-            onChange={(event) => setSelectedFixtureId(event.target.value)}
+            value={selectedFixture?.fixtureId ?? ""}
+            onChange={(event) => {
+              setSelectedFixtureId(event.target.value);
+              setOdds(undefined);
+              setScore(undefined);
+              setAgentTick(undefined);
+            }}
             className="h-10 rounded-md border border-stone-700 bg-black/40 px-3 font-mono text-sm text-white outline-none"
             disabled={fixtures.length === 0}
           >
@@ -205,7 +205,7 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
                 </option>
               ))
             ) : (
-              <option value={fallbackFixture.fixtureId}>No live fixture loaded</option>
+              <option value="">No live fixture loaded</option>
             )}
           </select>
 
@@ -248,7 +248,6 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
           {!hasLiveData ? (
             <EmptyState title="Live TxLINE source not loaded">
               Configure server-only TxLINE credentials, then restart the dev server.
-              Replay mode remains fully available without any external account.
             </EmptyState>
           ) : null}
 
@@ -262,7 +261,13 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
       </div>
 
       <div className="grid gap-4">
-        <MarketStatePanel market={market} />
+        {market ? (
+          <MarketStatePanel market={market} />
+        ) : (
+          <EmptyState title="No live fixture loaded">
+            EdgeKeeper is waiting for a TxLINE fixture from the server route.
+          </EmptyState>
+        )}
         <div className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
           <div className="mb-3 flex flex-wrap gap-2">
             <Badge tone="cyan">DERIVED SUMMARY</Badge>
