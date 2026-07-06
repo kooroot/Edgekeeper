@@ -1,0 +1,86 @@
+[
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928800000,
+    "Seq": 1,
+    "PhaseId": 2,
+    "Minute": 8,
+    "Participant1Score": 0,
+    "Participant2Score": 0,
+    "Stats": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0
+    },
+    "RawSummary": "First half, scoreless",
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928835000,
+    "Seq": 2,
+    "PhaseId": 2,
+    "Minute": 24,
+    "Participant1Score": 0,
+    "Participant2Score": 0,
+    "Stats": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0,
+      "6": 0,
+      "7": 3,
+      "8": 0
+    },
+    "RawSummary": "Team Alpha pressure, three corners",
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928850000,
+    "Seq": 3,
+    "PhaseId": 2,
+    "Minute": 31,
+    "Participant1Score": 1,
+    "Participant2Score": 0,
+    "Stats": {
+      "1": 1,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0,
+      "6": 0,
+      "7": 3,
+      "8": 0
+    },
+    "RawSummary": "Team Alpha goal, price barely confirmed",
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928885000,
+    "Seq": 4,
+    "PhaseId": 5,
+    "Minute": 90,
+    "Participant1Score": 1,
+    "Participant2Score": 0,
+    "Stats": {
+      "1": 1,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0,
+      "6": 0,
+      "7": 4,
+      "8": 2
+    },
+    "RawSummary": "Full time",
+    "Source": "replay"
+  }
+]

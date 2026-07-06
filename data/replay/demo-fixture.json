@@ -1,0 +1,9 @@
+{
+  "FixtureId": "edgekeeper-demo-001",
+  "Participant1": "Team Alpha",
+  "Participant2": "Team Beta",
+  "Participant1IsHome": true,
+  "StartTime": "2026-07-01T18:00:00.000Z",
+  "Status": "In play",
+  "CompetitionId": "world-cup-football-demo"
+}

@@ -1,0 +1,167 @@
+[
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928800000,
+    "Seq": 1,
+    "Market": "1X2",
+    "Selection": "P1",
+    "DecimalOdds": 2.38,
+    "ImpliedProbability": 0.42,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928800000,
+    "Seq": 1,
+    "Market": "1X2",
+    "Selection": "DRAW",
+    "DecimalOdds": 3.45,
+    "ImpliedProbability": 0.29,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928800000,
+    "Seq": 1,
+    "Market": "1X2",
+    "Selection": "P2",
+    "DecimalOdds": 3.45,
+    "ImpliedProbability": 0.29,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928820000,
+    "Seq": 2,
+    "Market": "1X2",
+    "Selection": "P1",
+    "DecimalOdds": 2.08,
+    "ImpliedProbability": 0.48,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928820000,
+    "Seq": 2,
+    "Market": "1X2",
+    "Selection": "DRAW",
+    "DecimalOdds": 3.57,
+    "ImpliedProbability": 0.28,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928820000,
+    "Seq": 2,
+    "Market": "1X2",
+    "Selection": "P2",
+    "DecimalOdds": 4.17,
+    "ImpliedProbability": 0.24,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928850000,
+    "Seq": 3,
+    "Market": "1X2",
+    "Selection": "P1",
+    "DecimalOdds": 2.04,
+    "ImpliedProbability": 0.49,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928850000,
+    "Seq": 3,
+    "Market": "1X2",
+    "Selection": "DRAW",
+    "DecimalOdds": 3.85,
+    "ImpliedProbability": 0.26,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928850000,
+    "Seq": 3,
+    "Market": "1X2",
+    "Selection": "P2",
+    "DecimalOdds": 4.0,
+    "ImpliedProbability": 0.25,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928865000,
+    "Seq": 4,
+    "Market": "1X2",
+    "Selection": "P1",
+    "DecimalOdds": 2.56,
+    "ImpliedProbability": 0.39,
+    "Suspended": true,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928865000,
+    "Seq": 4,
+    "Market": "1X2",
+    "Selection": "DRAW",
+    "DecimalOdds": 3.7,
+    "ImpliedProbability": 0.27,
+    "Suspended": true,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928865000,
+    "Seq": 4,
+    "Market": "1X2",
+    "Selection": "P2",
+    "DecimalOdds": 2.94,
+    "ImpliedProbability": 0.34,
+    "Suspended": true,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928880000,
+    "Seq": 5,
+    "Market": "1X2",
+    "Selection": "P1",
+    "DecimalOdds": 2.5,
+    "ImpliedProbability": 0.4,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928880000,
+    "Seq": 5,
+    "Market": "1X2",
+    "Selection": "DRAW",
+    "DecimalOdds": 3.33,
+    "ImpliedProbability": 0.3,
+    "Suspended": false,
+    "Source": "replay"
+  },
+  {
+    "FixtureId": "edgekeeper-demo-001",
+    "Ts": 1782928880000,
+    "Seq": 5,
+    "Market": "1X2",
+    "Selection": "P2",
+    "DecimalOdds": 3.33,
+    "ImpliedProbability": 0.3,
+    "Suspended": false,
+    "Source": "replay"
+  }
+]
