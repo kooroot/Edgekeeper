@@ -6,6 +6,24 @@ EdgeKeeper is a proof-aware cockpit for trading-agent decisions over World Cup f
 
 It is not a real-money betting tool. There is no wallet connection, no venue adapter, no CLOB order submission, no custody, and no user-funded order path.
 
+## Submission Track Fit
+
+EdgeKeeper targets the Superteam / TxODDS World Cup Hackathon **Trading Tools and Agents** listing:
+
+```txt
+https://superteam.fun/earn/listing/trading-tools-and-agents/
+```
+
+The project belongs in this track because it builds operator tooling around trading-agent decisions:
+
+- normalized live/replay football data ingestion
+- signal detection over odds and score movement
+- deterministic risk checks
+- simulated position marking from TxLINE odds/probabilities
+- auditable decision receipts
+
+It is not a `Prediction Markets and Settlement` project because it has no market creation, outcome resolution, payout, or settlement layer. It is not a `Consumer and Fan Experiences` project because the primary surface is a trading terminal for builders and agent developers, not a fan-facing companion app.
+
 ## loldosa Auto Bet Comparison
 
 The loldosa Auto Bet codebase supports a materially different class of functionality:

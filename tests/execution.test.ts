@@ -3,7 +3,7 @@ import { applyPaperExecution, calculatePaperPnl } from "../lib/agent/execution";
 import type { RiskDecision, Signal } from "../lib/agent/types";
 
 describe("execution", () => {
-  it("marks paper execution PnL from probability movement", () => {
+  it("marks simulated PnL from probability movement", () => {
     expect(calculatePaperPnl(100, 0.4, 0.5)).toBe(25);
     expect(calculatePaperPnl(100, 0.5, 0.4)).toBe(-20);
   });

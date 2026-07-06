@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "EdgeKeeper",
-  description: "Auditable trading-agent decisions for verified football data.",
+  description: "Trading Tools and Agents cockpit for auditable TxLINE football decisions.",
   icons: {
     icon: "/favicon.svg",
   },

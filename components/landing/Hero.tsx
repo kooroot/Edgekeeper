@@ -36,6 +36,7 @@ export function Hero() {
 
       <div className="mx-auto flex max-w-6xl flex-col justify-center gap-8 pt-16 md:min-h-[62svh]">
         <div className="flex flex-wrap gap-2">
+          <Badge tone="neutral">TRADING TOOLS AND AGENTS</Badge>
           <Badge tone="cyan">REPLAY MODE</Badge>
           <Badge tone="amber">TXLINE-VALUED SIM</Badge>
           <Badge tone="green">RISK CHECKED</Badge>
@@ -52,6 +53,10 @@ export function Hero() {
           <p className="mt-5 max-w-2xl text-xl leading-8 text-stone-300 md:text-2xl">
             Auditable trading-agent decisions for verified football data
           </p>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-stone-500">
+            Built for the TxODDS World Cup Trading Tools and Agents track. Operator tooling,
+            not a prediction market, fan app, wallet flow, or real-money bot.
+          </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/cockpit"
@@ -61,7 +66,7 @@ export function Hero() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <p className="text-xs text-stone-500">
-              Simulated execution only. No real-money betting. Unofficial fan/data tool.
+              Simulated execution only. No real-money betting. Unofficial data tool.
             </p>
           </div>
         </div>

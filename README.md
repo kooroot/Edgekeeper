@@ -5,12 +5,19 @@ EdgeKeeper is a proof-aware trading-agent cockpit for World Cup football markets
 This is not a betting app and not a real-money trading bot. Replay mode works without a wallet, TxLINE credentials, paid account, token purchase, or real funds.
 
 - Public demo: https://edgekeeper-kohl.vercel.app
+- Submission track: Trading Tools and Agents
 - Judge path: open `/cockpit`, click `Start Replay`, inspect signals, risk checks, simulated positions, and receipts.
 - Source target: https://github.com/kooroot/Edgekeeper
 
-## Track Fit
+## Submission Track
 
-EdgeKeeper targets the Superteam / TxODDS World Cup Hackathon Track 2: Trading Tools and Agents.
+EdgeKeeper is submitted to the Superteam / TxODDS World Cup Hackathon **Trading Tools and Agents** track.
+
+Canonical listing:
+
+```txt
+https://superteam.fun/earn/listing/trading-tools-and-agents/
+```
 
 The product is built for builders, quants, market makers, and trading-agent developers who need observability around agent decisions:
 
@@ -19,6 +26,12 @@ The product is built for builders, quants, market makers, and trading-agent deve
 - Risk checks deterministically pass or block proposed actions.
 - Execution is simulation-only and valued from TxLINE decimal odds / implied probabilities.
 - Receipts include signal, risk, action, hashes, and proof references without redistributing raw TxODDS data.
+
+### Why This Track, Not The Others
+
+EdgeKeeper is not a `Prediction Markets and Settlement` submission because it does not create markets, resolve outcomes, implement settlement, custody funds, or provide on-chain proof integrations for payout flows.
+
+EdgeKeeper is not a `Consumer and Fan Experiences` submission because it is not a fan app, game, bot, social product, or consumer live-match companion. It is a trading-agent cockpit for operators who need signal, risk, simulated execution, and audit tooling.
 
 Official references:
 
@@ -32,7 +45,7 @@ Official references:
 - https://txline-docs.txodds.com/documentation/scores/soccer-feed
 - https://txline-docs.txodds.com/documentation/legal/hackathon-terms
 
-## Boundary From ProofMarket And loldosa Auto Bet
+## Execution Boundary
 
 EdgeKeeper is deliberately separate from ProofMarket. ProofMarket would be a market or consumer-facing prediction product. EdgeKeeper is an agent cockpit and risk-analysis tool; it does not create markets, custody funds, take stakes, connect user wallets, place bets, or execute real orders.
 
