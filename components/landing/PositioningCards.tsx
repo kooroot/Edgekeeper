@@ -2,18 +2,18 @@ import { DatabaseZap, FileCheck2, Radar } from "lucide-react";
 
 const cards = [
   {
-    title: "Ingest TxLINE odds and scores",
-    description: "Server-side connectors normalize TxLINE-shaped snapshots and streams.",
+    title: "Ingest verified market state",
+    description: "Server-side connectors normalize TxLINE odds, scores, phase, and stat snapshots.",
     icon: DatabaseZap,
   },
   {
-    title: "Detect signals and run risk checks",
-    description: "Deterministic engines flag movement, divergence, momentum, stale feeds, and suspensions.",
+    title: "Run strategy and risk gates",
+    description: "Agent logic turns normalized inputs into decisions, then blocks unsafe actions.",
     icon: Radar,
   },
   {
-    title: "Mark simulated positions and emit receipts",
-    description: "Every pass, block, open, and close action is marked with TxLINE odds and receipt hashes.",
+    title: "Mark positions and receipts",
+    description: "Simulation state, PnL marks, input hashes, and decision receipts stay inspectable.",
     icon: FileCheck2,
   },
 ];

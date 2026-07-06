@@ -6,6 +6,14 @@ EdgeKeeper is a proof-aware cockpit for trading-agent decisions over World Cup f
 
 It is not a real-money betting tool. There is no wallet connection, no venue adapter, no CLOB order submission, no custody, and no user-funded order path.
 
+The user-facing product loop is deliberately narrow:
+
+```txt
+TxLINE market state -> agent decision -> risk engine -> simulated position -> receipt
+```
+
+This loop keeps the scope limited to operator-facing strategy state, deterministic guardrail outcomes, simulated position marks, and audit receipts.
+
 ## Submission Track Fit
 
 EdgeKeeper targets the Superteam / TxODDS World Cup Hackathon **Trading Tools and Agents** listing:
@@ -18,19 +26,20 @@ The project belongs in this track because it builds operator tooling around trad
 
 - normalized live/replay football data ingestion
 - signal detection over odds and score movement
+- explicit agent decision state
 - deterministic risk checks
 - simulated position marking from TxLINE odds/probabilities
 - auditable decision receipts
 
-It is not a `Prediction Markets and Settlement` project because it has no market creation, outcome resolution, payout, or settlement layer. It is not a `Consumer and Fan Experiences` project because the primary surface is a trading terminal for builders and agent developers, not a fan-facing companion app.
+It is not a `Prediction Markets and Settlement` project because it has no market creation, outcome resolution, payout, or settlement layer. The primary surface is a trading terminal for builders and agent developers.
 
 ### Official Judging Criteria Coverage
 
 | Criterion | Implementation evidence |
 | --- | --- |
-| Core Functionality & Data Ingestion | `app/api/fixtures`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. Replay mode uses seeded TxLINE-shaped packets. |
-| Autonomous Operation | `lib/replay/replay-engine.ts` runs packet processing end-to-end once the replay is started: signals, risk, simulated execution, and receipts. |
-| Logic & Code Architecture | `lib/agent/signals.ts`, `risk.ts`, `execution.ts`, `receipt.ts`, and `state.ts` keep deterministic strategy logic isolated and testable. |
+| Core Functionality & Data Ingestion | `app/api/fixtures`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. `app/api/live-agent/[fixtureId]` consumes live odds/scores snapshots and executes a defined strategy tick. Replay mode uses seeded TxLINE-shaped packets. |
+| Autonomous Operation | `lib/replay/replay-engine.ts` runs packet processing end-to-end once the replay is started. `components/cockpit/LiveSnapshotPanel.tsx` also runs the live agent tick automatically every 60 seconds for the selected fixture. |
+| Logic & Code Architecture | `lib/agent/signals.ts`, `risk.ts`, `execution.ts`, `receipt.ts`, `state.ts`, and `live-agent.ts` keep deterministic strategy logic isolated and testable. |
 | Innovation & Novelty | Decision receipts combine signal input hashes, risk decisions, actions, and proof references so agent behavior is replayable and auditable. |
 | Production Readiness | Vercel production uses server-only TxLINE mainnet credentials with devnet fallback; replay works credential-free; tests, lint, and build pass under Bun. |
 
@@ -42,19 +51,20 @@ It is not a `Prediction Markets and Settlement` project because it has no market
 - Technical docs: this document.
 - TxLINE feedback: see `README.md`.
 
-## loldosa Auto Bet Comparison
+## Execution Boundary
 
-The loldosa Auto Bet codebase supports a materially different class of functionality:
+EdgeKeeper does not include a money path. Its actions are internal simulation events over normalized TxLINE-derived state.
 
-- wallet/session and billing access
-- eligibility and terms consent gates
-- Polymarket deposit-wallet derivation and enablement
-- CLOB order request construction
-- `createOrder`, `createMarketOrder`, and `postOrder` calls
-- worker queues for snapshot evaluation, order execution, reconciliation, and settlement redemption
-- live execution gates such as `AUTO_BET_LIVE_ENABLED=false`
+Excluded surfaces:
 
-EdgeKeeper overlaps only at the analysis vocabulary layer: signals, risk checks, open/close state, and PnL-like marks. EdgeKeeper does not include the money path. Its actions are internal simulation events.
+- wallet/session flow
+- billing or deposits
+- venue adapters
+- CLOB order construction
+- order posting
+- execution queues
+- reconciliation against a real venue
+- settlement redemption
 
 ## Data Flow
 
@@ -81,9 +91,11 @@ browser
   -> app/api/fixtures
   -> app/api/odds/[fixtureId]
   -> app/api/scores/[fixtureId]
+  -> app/api/live-agent/[fixtureId]
   -> lib/txline/client.ts
   -> TxLINE API with server-only credentials
   -> tolerant normalizers
+  -> signal/risk/simulated execution/receipt
   -> derived cockpit summaries
 ```
 
@@ -108,6 +120,7 @@ Endpoint mapping:
 | `getOddsSnapshot(fixtureId)` | `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]` |
 | `getScoresSnapshot(fixtureId)` | `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]` |
 | `getHistoricalScores(fixtureId)` | `GET /api/scores/historical/{fixtureId}` | available server-side for backfill |
+| `getOddsSnapshot()` + `getScoresSnapshot()` | snapshot composition | `POST /api/live-agent/[fixtureId]` live strategy tick |
 | `streamOdds()` | `GET /api/odds/stream` | available server-side for SSE integration |
 | `streamScores()` | `GET /api/scores/stream` | available server-side for SSE integration |
 
@@ -139,8 +152,23 @@ The UI is built from normalized fields such as fixture id, teams, phase, score, 
 - `MOMENTUM_SHIFT`: score, cards, corners, and phase/stat deltas show a directional change.
 - `STALE_FEED`: guard signal when required data ages out.
 - `SUSPENSION_GUARD`: guard signal when the latest market is suspended.
+- `LIVE_MARKET_SCAN`: live-mode NOOP scan receipt when no sharper signal fires on a 60-second tick.
 
 Signals contain deterministic ids, confidence, suggested action, and an input hash.
+
+## Live Agent Tick
+
+`POST /api/live-agent/[fixtureId]` is the deployed live-input strategy path. The route:
+
+1. Uses server-only TxLINE credentials.
+2. Fetches live odds and scores snapshots for the selected fixture.
+3. Normalizes the snapshots through tolerant TxLINE normalizers.
+4. Runs signal detection and a deterministic live NOOP scan fallback when no sharper signal fires.
+5. Runs the risk engine in `live` mode, including stale-feed and suspended-market blocks.
+6. Applies simulated execution state in memory.
+7. Emits compact decision receipts with `proofReference.source = "txline"`.
+
+The browser receives derived agent state only: signal, risk decision, simulated position summary, receipt, counts, timestamps, and network metadata. It does not receive TxLINE credentials or full raw feed dumps.
 
 ## Risk Engine
 

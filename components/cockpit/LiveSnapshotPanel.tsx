@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, SatelliteDish } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import type { LiveAgentTickResult } from "@/lib/agent/live-agent";
 import type { MarketState } from "@/lib/replay/replay-engine";
 import type { LiveFixturePreview, LiveOddsSummary, LiveScoreSummary } from "@/lib/txline/live-summary";
 import type { NormalizedFixture } from "@/lib/txline/types";
@@ -56,8 +57,10 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [odds, setOdds] = useState<LiveOddsSummary | undefined>();
   const [score, setScore] = useState<LiveScoreSummary | undefined>();
+  const [agentTick, setAgentTick] = useState<LiveAgentTickResult | undefined>();
   const [loadingFixtures, setLoadingFixtures] = useState(false);
   const [loadingSnapshot, setLoadingSnapshot] = useState(false);
+  const [loadingAgentTick, setLoadingAgentTick] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fixtures = fixturesResponse?.fixtures ?? [];
@@ -107,6 +110,25 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     }
   }, [fallbackFixture.fixtureId, selectedFixture.fixtureId]);
 
+  const runAgentTick = useCallback(async (fixtureId = selectedFixture.fixtureId) => {
+    if (!fixtureId || fixtureId === fallbackFixture.fixtureId) return;
+    setLoadingAgentTick(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/live-agent/${encodeURIComponent(fixtureId)}`, {
+        cache: "no-store",
+        method: "POST",
+      });
+      const body = (await response.json()) as LiveAgentTickResult & { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Live agent tick failed");
+      setAgentTick(body);
+    } catch (tickError) {
+      setError(tickError instanceof Error ? tickError.message : "Live agent tick failed");
+    } finally {
+      setLoadingAgentTick(false);
+    }
+  }, [fallbackFixture.fixtureId, selectedFixture.fixtureId]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void loadFixtures();
@@ -121,6 +143,19 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
     }, 0);
     return () => window.clearTimeout(timer);
   }, [loadSnapshot, selectedFixtureId]);
+
+  useEffect(() => {
+    if (!selectedFixtureId || fixturesResponse?.mode !== "live") return;
+    const run = () => {
+      void runAgentTick(selectedFixtureId);
+    };
+    const timer = window.setTimeout(run, 0);
+    const interval = window.setInterval(run, 60_000);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(interval);
+    };
+  }, [fixturesResponse?.mode, runAgentTick, selectedFixtureId]);
 
   const hasLiveData = fixturesResponse?.mode === "live";
   const hasDirectCredentials = hasLiveData && fixturesResponse.credentialsAvailable === true;
@@ -193,6 +228,15 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
               <RefreshCw className="h-4 w-4" />
               {loadingSnapshot ? "Loading snapshot" : "Refresh Snapshot"}
             </button>
+            <button
+              type="button"
+              onClick={() => void runAgentTick()}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-cyan-500/50 bg-cyan-500/10 px-3 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loadingAgentTick || fixtures.length === 0}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {loadingAgentTick ? "Running agent" : "Run Agent Tick"}
+            </button>
           </div>
 
           {error ? (
@@ -223,6 +267,7 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
           <div className="mb-3 flex flex-wrap gap-2">
             <Badge tone="cyan">DERIVED SUMMARY</Badge>
             <Badge tone="amber">NO RAW FEED EXPORT</Badge>
+            <Badge tone="green">AUTO 60S AGENT TICK</Badge>
             {odds?.count ? <Badge tone="green">{odds.count} odds rows read</Badge> : null}
             {score?.count ? <Badge tone="green">{score.count} score rows read</Badge> : null}
           </div>
@@ -232,7 +277,92 @@ export function LiveSnapshotPanel({ fallbackFixture }: { fallbackFixture: Normal
             not downloadable here.
           </p>
         </div>
+        <LiveAgentTickPanel tick={agentTick} loading={loadingAgentTick} />
       </div>
     </section>
+  );
+}
+
+function LiveAgentTickPanel({
+  tick,
+  loading,
+}: {
+  tick?: LiveAgentTickResult;
+  loading: boolean;
+}) {
+  const latestSignal = tick?.signals.at(-1);
+  const latestRisk = tick?.riskDecisions.at(-1);
+  const latestReceipt = tick?.latestReceipt;
+  const blockedCheck = latestRisk?.checks.find((check) => check.status === "BLOCK");
+
+  return (
+    <div className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold uppercase text-stone-200">Live agent tick</h2>
+          <p className="mt-1 font-mono text-xs text-stone-500">
+            TxLINE input to strategy, risk, simulated action, and receipt
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge tone={tick ? "green" : "neutral"}>{tick ? "LIVE STRATEGY RAN" : "WAITING"}</Badge>
+          <Badge tone="cyan">SERVER-SIDE</Badge>
+        </div>
+      </div>
+
+      {!tick ? (
+        <EmptyState title={loading ? "Live agent running" : "No live agent tick yet"}>
+          The live tab automatically runs the agent every 60 seconds once a fixture is loaded.
+        </EmptyState>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-3">
+          <div className="rounded-md border border-stone-800 bg-black/30 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-mono text-[11px] uppercase text-stone-500">decision</div>
+              <Badge tone={latestSignal?.suggestedAction === "BLOCK" ? "red" : "cyan"}>
+                {latestSignal?.suggestedAction ?? "NOOP"}
+              </Badge>
+            </div>
+            <div className="text-sm font-semibold text-white">
+              {latestSignal?.title ?? "No signal"}
+            </div>
+            <p className="mt-2 text-xs leading-5 text-stone-500">
+              {latestSignal?.description ?? "No decision description available."}
+            </p>
+          </div>
+
+          <div className="rounded-md border border-stone-800 bg-black/30 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-mono text-[11px] uppercase text-stone-500">risk</div>
+              <Badge tone={latestRisk?.status === "BLOCK" ? "red" : "green"}>
+                {latestRisk?.status ?? "PASS"}
+              </Badge>
+            </div>
+            <div className="text-sm font-semibold text-white">
+              {latestRisk?.finalAction ?? "NOOP"}
+            </div>
+            <p className="mt-2 text-xs leading-5 text-stone-500">
+              {blockedCheck?.reason ?? `${latestRisk?.checks.length ?? 0} deterministic checks evaluated.`}
+            </p>
+          </div>
+
+          <div className="rounded-md border border-stone-800 bg-black/30 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-mono text-[11px] uppercase text-stone-500">receipt</div>
+              <Badge tone={latestReceipt ? "cyan" : "neutral"}>
+                {tick.receipts.length} emitted
+              </Badge>
+            </div>
+            <div className="break-all font-mono text-xs text-cyan-100">
+              {latestReceipt?.id ?? "pending"}
+            </div>
+            <p className="mt-2 font-mono text-[11px] leading-5 text-stone-500">
+              positions {tick.positions.length} / odds rows {tick.inputSummary.oddsCount} / score rows{" "}
+              {tick.inputSummary.scoreCount}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

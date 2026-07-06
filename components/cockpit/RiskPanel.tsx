@@ -23,14 +23,14 @@ export function RiskPanel({
     <section className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold uppercase text-stone-200">Risk checks</h2>
-          <p className="mt-1 font-mono text-xs text-stone-500">deterministic guardrails</p>
+          <h2 className="text-sm font-semibold uppercase text-stone-200">Risk engine</h2>
+          <p className="mt-1 font-mono text-xs text-stone-500">deterministic execution gates</p>
         </div>
         <Badge tone={blockedCount > 0 ? "red" : "green"}>{blockedCount} blocked</Badge>
       </div>
 
       {!latest ? (
-        <EmptyState title="No risk decision yet">Risk checks run when the first signal appears.</EmptyState>
+        <EmptyState title="No risk decision yet">Risk checks run when the first agent decision appears.</EmptyState>
       ) : (
         <div className="space-y-4">
           <div

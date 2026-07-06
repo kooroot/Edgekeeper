@@ -22,8 +22,8 @@ export function MarketStatePanel({ market }: { market: MarketState }) {
     <section className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold uppercase text-stone-200">Market state</h2>
-          <p className="mt-1 font-mono text-xs text-stone-500">normalized replay summary</p>
+          <h2 className="text-sm font-semibold uppercase text-stone-200">TxLINE market state</h2>
+          <p className="mt-1 font-mono text-xs text-stone-500">agent input summary</p>
         </div>
         {market.suspended ? <Badge tone="red">SUSPENDED</Badge> : <Badge tone="green">ACTIVE</Badge>}
       </div>

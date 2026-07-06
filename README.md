@@ -9,6 +9,16 @@ This is not a betting app and not a real-money trading bot. Replay mode works wi
 - Judge path: open `/cockpit`, click `Start Replay`, inspect signals, risk checks, simulated positions, and receipts.
 - Source target: https://github.com/kooroot/Edgekeeper
 
+## Product Boundary
+
+EdgeKeeper's core product loop is:
+
+```txt
+TxLINE odds/scores -> agent decision -> risk engine -> simulated position -> receipt
+```
+
+That boundary is intentional. The application is an operator cockpit for reviewing automated trading-agent behavior from signal input through receipt output.
+
 ## Submission Track
 
 EdgeKeeper is submitted to the Superteam / TxODDS World Cup Hackathon **Trading Tools and Agents** track.
@@ -22,16 +32,15 @@ https://superteam.fun/earn/listing/trading-tools-and-agents/
 The product is built for builders, quants, market makers, and trading-agent developers who need observability around agent decisions:
 
 - TxLINE football data is fetched only through server-side routes.
+- Agent decisions are rendered as proposed OPEN, CLOSE, NOOP, or BLOCK actions.
 - Signals are derived from normalized odds and scores, not raw feed dumps.
 - Risk checks deterministically pass or block proposed actions.
 - Execution is simulation-only and valued from TxLINE decimal odds / implied probabilities.
 - Receipts include signal, risk, action, hashes, and proof references without redistributing raw TxODDS data.
 
-### Why This Track, Not The Others
+### Why This Track
 
-EdgeKeeper is not a `Prediction Markets and Settlement` submission because it does not create markets, resolve outcomes, implement settlement, custody funds, or provide on-chain proof integrations for payout flows.
-
-EdgeKeeper is not a `Consumer and Fan Experiences` submission because it is not a fan app, game, bot, social product, or consumer live-match companion. It is a trading-agent cockpit for operators who need signal, risk, simulated execution, and audit tooling.
+EdgeKeeper fits `Trading Tools and Agents` because the product surface is built around automated decision logic, deterministic guardrails, simulated position state, and audit receipts. It does not create markets, resolve outcomes, custody funds, take user stakes, or provide payout/settlement flows.
 
 ### Judge Evidence Map
 
@@ -39,9 +48,9 @@ The Trading Tools and Agents listing asks for a running agent or automated tool 
 
 | Official criterion | EdgeKeeper evidence |
 | --- | --- |
-| Core functionality and data ingestion | Server routes fetch TxLINE fixture, odds, and score snapshots; replay mode uses TxLINE-shaped packets for deterministic judging. |
-| Autonomous operation | After `Start Replay`, the agent processes every packet without manual intervention: signal detection, risk checks, simulated opens/closes, and receipts. |
-| Logic and code architecture | Signal, risk, execution, receipt, hashing, and normalizer modules are separated under `lib/` with Vitest coverage. |
+| Core functionality and data ingestion | Server routes fetch TxLINE fixture, odds, and score snapshots; `/api/live-agent/[fixtureId]` executes a live strategy tick from those snapshots; replay mode uses TxLINE-shaped packets for deterministic judging. |
+| Autonomous operation | After `Start Replay`, the replay agent processes every packet without manual intervention. In live mode, the cockpit runs a server-side agent tick automatically every 60 seconds for the selected fixture. |
+| Logic and code architecture | Signal, risk, execution, live-agent, receipt, hashing, and normalizer modules are separated under `lib/` with Vitest coverage. |
 | Innovation and novelty | The product focuses on proof-aware agent observability: every pass, block, open, and close emits a replayable receipt. |
 | Production readiness | Bun/Next build passes, live mainnet TxLINE credentials run server-side on Vercel, secrets stay off the browser, and replay works without accounts. |
 
@@ -67,9 +76,9 @@ Official references:
 
 ## Execution Boundary
 
-EdgeKeeper is deliberately separate from ProofMarket. ProofMarket would be a market or consumer-facing prediction product. EdgeKeeper is an agent cockpit and risk-analysis tool; it does not create markets, custody funds, take stakes, connect user wallets, place bets, or execute real orders.
+EdgeKeeper is an agent cockpit and risk-analysis tool. It does not create markets, custody funds, take stakes, connect user wallets, place bets, or execute real orders.
 
-It is also intentionally not a port of loldosa Auto Bet. The loldosa Auto Bet work included wallet/session handling, eligibility consent, Polymarket deposit-wallet infrastructure, CLOB order construction, venue order posting, worker queues, reconciliation, and live execution gates. EdgeKeeper does none of that. Its `OPEN_*` and `CLOSE` actions are internal simulation events only, marked against TxLINE-derived probabilities and decimal odds.
+Its `OPEN_*` and `CLOSE` actions are internal simulation events only, marked against TxLINE-derived probabilities and decimal odds. There is no wallet/session flow, venue adapter, CLOB order construction, order posting, deposit/withdrawal path, or settlement redemption path.
 
 ## Modes
 
@@ -99,6 +108,7 @@ EdgeKeeper's live path uses these TxLINE endpoints through `lib/txline/client.ts
 | `GET /api/fixtures/snapshot` | `GET /api/fixtures`, fixture list for World Cup football markets |
 | `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]`, normalized 1X2 / match-winner odds points |
 | `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]`, normalized football score and stat state |
+| `GET /api/odds/snapshot/{fixtureId}` + `GET /api/scores/snapshot/{fixtureId}` | `POST /api/live-agent/[fixtureId]`, server-side live strategy tick with signal, risk, simulated action, and receipt |
 | `GET /api/scores/historical/{fixtureId}` | client method available for historical score replay/backfill |
 | `GET /api/odds/stream` | client method available for SSE odds streaming |
 | `GET /api/scores/stream` | client method available for SSE score streaming |
@@ -114,6 +124,7 @@ app/
     fixtures/route.ts
     odds/[fixtureId]/route.ts
     scores/[fixtureId]/route.ts
+    live-agent/[fixtureId]/route.ts
     replay/[fixtureId]/route.ts
     receipts/[id]/route.ts
 components/
@@ -155,6 +166,7 @@ Expected demo flow:
 4. A simulated position opens with entry decimal odds and implied probability.
 5. A later signal closes it with exit decimal odds, probability delta, and PnL.
 6. Decision receipts become clickable and viewable at `/receipts/[id]`.
+7. Open `Live TxLINE Snapshot` to see the deployed app run a server-side live agent tick every 60 seconds against the selected TxLINE fixture.
 
 The 1x replay completes in roughly 85 seconds. Use 5x or 20x for a faster walkthrough.
 

@@ -298,6 +298,60 @@ export function detectStaleFeedGuardSignal(input: SignalEngineInput): Signal | u
   });
 }
 
+export function createLiveMarketScanSignal(input: {
+  fixtureId: string;
+  now: number;
+  latestOdds: NormalizedOddsPoint[];
+  latestScore?: NormalizedScoreUpdate;
+  previousLatestOdds: NormalizedOddsPoint[];
+  previousScore?: NormalizedScoreUpdate;
+  oddsCount: number;
+  scoreCount: number;
+}): Signal {
+  const latestOddsTs = Math.max(...input.latestOdds.map((point) => point.ts), 0);
+  const latestScoreTs = input.latestScore?.ts ?? 0;
+
+  return makeSignal({
+    fixtureId: input.fixtureId,
+    ts: input.now,
+    type: "LIVE_MARKET_SCAN",
+    severity: "LOW",
+    title: "Live market scan",
+    description:
+      "No sharp movement signal fired on this tick; the agent recorded a deterministic NOOP decision.",
+    confidence: 0.51,
+    suggestedAction: "NOOP",
+    input: {
+      latestOddsTs,
+      latestScoreTs,
+      oddsCount: input.oddsCount,
+      scoreCount: input.scoreCount,
+      latestSelections: input.latestOdds.map((point) => ({
+        market: point.market,
+        selection: point.selection,
+        impliedProbability: oddsProbability(point),
+        suspended: point.suspended,
+        ts: point.ts,
+        seq: point.seq,
+      })),
+      latestScore: input.latestScore
+        ? {
+            ts: input.latestScore.ts,
+            seq: input.latestScore.seq,
+            phaseId: input.latestScore.phaseId,
+            minute: input.latestScore.minute,
+            participant1Score: input.latestScore.participant1Score,
+            participant2Score: input.latestScore.participant2Score,
+          }
+        : undefined,
+      previousOddsTs: Math.max(...input.previousLatestOdds.map((point) => point.ts), 0),
+      previousScoreTs: input.previousScore?.ts,
+      strategy: "live_market_scan_v1",
+    },
+    discriminator: "live-scan",
+  });
+}
+
 export function detectSignals(input: SignalEngineInput): Signal[] {
   return [
     detectSuspensionGuardSignal(input),

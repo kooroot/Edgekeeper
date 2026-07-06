@@ -26,14 +26,14 @@ export function SignalFeed({
     <section className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold uppercase text-stone-200">Signal feed</h2>
-          <p className="mt-1 font-mono text-xs text-stone-500">agent timeline</p>
+          <h2 className="text-sm font-semibold uppercase text-stone-200">Agent decisions</h2>
+          <p className="mt-1 font-mono text-xs text-stone-500">signal timeline and proposed actions</p>
         </div>
         <Badge tone="cyan">{signals.length} signals</Badge>
       </div>
 
       {signals.length === 0 ? (
-        <EmptyState title="No agent signals yet">Start replay to process odds and score updates.</EmptyState>
+        <EmptyState title="No agent decisions yet">Start replay to process odds and score updates.</EmptyState>
       ) : (
         <div className="max-h-[520px] space-y-3 overflow-auto pr-1">
           {signals

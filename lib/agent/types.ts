@@ -7,7 +7,8 @@ export type Signal = {
     | "SCORE_PRICE_DIVERGENCE"
     | "MOMENTUM_SHIFT"
     | "STALE_FEED"
-    | "SUSPENSION_GUARD";
+    | "SUSPENSION_GUARD"
+    | "LIVE_MARKET_SCAN";
   severity: "LOW" | "MEDIUM" | "HIGH";
   title: string;
   description: string;

@@ -6,6 +6,7 @@ import type { ReplayFrame, ReplayRun } from "@/lib/replay/replay-engine";
 import { AgentStatusBar } from "./AgentStatusBar";
 import { MarketStatePanel } from "./MarketStatePanel";
 import { LiveSnapshotPanel } from "./LiveSnapshotPanel";
+import { OperatorOverview } from "./OperatorOverview";
 import { PaperLedger } from "./PaperLedger";
 import { ReceiptDrawer } from "./ReceiptDrawer";
 import { ReplayControls, type ReplayStatus } from "./ReplayControls";
@@ -126,6 +127,8 @@ export function AgentCockpit({ replayRun }: { replayRun: ReplayRun }) {
               speed={speed}
               status={status}
             />
+
+            <OperatorOverview frame={frame} />
 
             <section className="grid gap-4 xl:grid-cols-[minmax(280px,0.85fr)_minmax(380px,1.35fr)_minmax(320px,0.95fr)]">
               <MarketStatePanel market={frame.market} />

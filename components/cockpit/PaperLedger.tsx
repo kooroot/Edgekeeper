@@ -36,9 +36,9 @@ export function PaperLedger({
     <section className="rounded-lg border border-stone-800 bg-stone-950/80 p-4">
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-sm font-semibold uppercase text-stone-200">Execution ledger</h2>
+          <h2 className="text-sm font-semibold uppercase text-stone-200">Simulated position ledger</h2>
           <p className="mt-1 font-mono text-xs text-stone-500">
-            TxLINE odds-valued simulation, no real order routing
+            TxLINE odds-valued position state, no venue order routing
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[520px]">
