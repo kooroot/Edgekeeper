@@ -33,6 +33,26 @@ EdgeKeeper is not a `Prediction Markets and Settlement` submission because it do
 
 EdgeKeeper is not a `Consumer and Fan Experiences` submission because it is not a fan app, game, bot, social product, or consumer live-match companion. It is a trading-agent cockpit for operators who need signal, risk, simulated execution, and audit tooling.
 
+### Judge Evidence Map
+
+The Trading Tools and Agents listing asks for a running agent or automated tool that ingests TxLINE feeds and executes a defined strategy. EdgeKeeper maps to the judging criteria as follows:
+
+| Official criterion | EdgeKeeper evidence |
+| --- | --- |
+| Core functionality and data ingestion | Server routes fetch TxLINE fixture, odds, and score snapshots; replay mode uses TxLINE-shaped packets for deterministic judging. |
+| Autonomous operation | After `Start Replay`, the agent processes every packet without manual intervention: signal detection, risk checks, simulated opens/closes, and receipts. |
+| Logic and code architecture | Signal, risk, execution, receipt, hashing, and normalizer modules are separated under `lib/` with Vitest coverage. |
+| Innovation and novelty | The product focuses on proof-aware agent observability: every pass, block, open, and close emits a replayable receipt. |
+| Production readiness | Bun/Next build passes, live mainnet TxLINE credentials run server-side on Vercel, secrets stay off the browser, and replay works without accounts. |
+
+Submission requirements covered:
+
+- Demo video: record `/cockpit` replay plus the live TxLINE snapshot tab.
+- Public repo: https://github.com/kooroot/Edgekeeper
+- Application access: https://edgekeeper-kohl.vercel.app
+- Technical docs: [`docs/TECHNICAL.md`](docs/TECHNICAL.md)
+- TxLINE API feedback: see the `TxLINE API Feedback For Submission` section below.
+
 Official references:
 
 - https://superteam.fun/earn/hackathon/world-cup/
@@ -69,6 +89,19 @@ Production is configured as:
 - secondary fallback: TxLINE devnet
 
 Preview and local development can use devnet primary. The browser never receives `TXLINE_JWT`, `TXLINE_API_TOKEN`, or wallet key material.
+
+### TxLINE Endpoints Used
+
+EdgeKeeper's live path uses these TxLINE endpoints through `lib/txline/client.ts`:
+
+| TxLINE endpoint | EdgeKeeper route / use |
+| --- | --- |
+| `GET /api/fixtures/snapshot` | `GET /api/fixtures`, fixture list for World Cup football markets |
+| `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]`, normalized 1X2 / match-winner odds points |
+| `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]`, normalized football score and stat state |
+| `GET /api/scores/historical/{fixtureId}` | client method available for historical score replay/backfill |
+| `GET /api/odds/stream` | client method available for SSE odds streaming |
+| `GET /api/scores/stream` | client method available for SSE score streaming |
 
 ## Architecture
 
@@ -190,6 +223,20 @@ bun run txline:issue:mainnet
 - No public raw TxODDS data redistribution.
 - Receipts include normalized summaries and hashes, not full raw TxODDS response dumps.
 - No profitability, guaranteed alpha, or betting advice claims.
+
+## TxLINE API Feedback For Submission
+
+What worked well:
+
+- Fixture, odds, and score snapshots are enough to build a working autonomous agent demo quickly.
+- The feed is suitable for deterministic replay because normalized snapshots can be hashed and replayed into receipts.
+- Server-side JWT/API-token access fits a secure cockpit architecture because credentials never need to reach the browser.
+
+Friction:
+
+- Response payloads can vary between PascalCase/camelCase and array/object shapes, so tolerant normalizers are necessary.
+- Odds selection labels are not always exactly `P1`, `DRAW`, `P2`, so the app needs selection mapping and unknown-market fallbacks.
+- Streaming support is useful, but a judge-friendly demo still needs a deterministic local replay path because review may happen after live match activity.
 
 ## Judge Demo Script
 

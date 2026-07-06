@@ -24,6 +24,24 @@ The project belongs in this track because it builds operator tooling around trad
 
 It is not a `Prediction Markets and Settlement` project because it has no market creation, outcome resolution, payout, or settlement layer. It is not a `Consumer and Fan Experiences` project because the primary surface is a trading terminal for builders and agent developers, not a fan-facing companion app.
 
+### Official Judging Criteria Coverage
+
+| Criterion | Implementation evidence |
+| --- | --- |
+| Core Functionality & Data Ingestion | `app/api/fixtures`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. Replay mode uses seeded TxLINE-shaped packets. |
+| Autonomous Operation | `lib/replay/replay-engine.ts` runs packet processing end-to-end once the replay is started: signals, risk, simulated execution, and receipts. |
+| Logic & Code Architecture | `lib/agent/signals.ts`, `risk.ts`, `execution.ts`, `receipt.ts`, and `state.ts` keep deterministic strategy logic isolated and testable. |
+| Innovation & Novelty | Decision receipts combine signal input hashes, risk decisions, actions, and proof references so agent behavior is replayable and auditable. |
+| Production Readiness | Vercel production uses server-only TxLINE mainnet credentials with devnet fallback; replay works credential-free; tests, lint, and build pass under Bun. |
+
+### Submission Artifacts
+
+- Live app: `https://edgekeeper-kohl.vercel.app`
+- Public repo: `https://github.com/kooroot/Edgekeeper`
+- Demo path: `/cockpit` -> `Start Replay` -> inspect signal feed, risk panel, execution ledger, and receipts.
+- Technical docs: this document.
+- TxLINE feedback: see `README.md`.
+
 ## loldosa Auto Bet Comparison
 
 The loldosa Auto Bet codebase supports a materially different class of functionality:
@@ -81,6 +99,17 @@ The live UI never receives TxLINE JWTs, API tokens, or raw downloadable feed dum
 - `getHistoricalScores(fixtureId)`
 - `streamOdds()`
 - `streamScores()`
+
+Endpoint mapping:
+
+| Client method | TxLINE endpoint | App-facing route |
+| --- | --- | --- |
+| `getFixturesSnapshot()` | `GET /api/fixtures/snapshot` | `GET /api/fixtures` |
+| `getOddsSnapshot(fixtureId)` | `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]` |
+| `getScoresSnapshot(fixtureId)` | `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]` |
+| `getHistoricalScores(fixtureId)` | `GET /api/scores/historical/{fixtureId}` | available server-side for backfill |
+| `streamOdds()` | `GET /api/odds/stream` | available server-side for SSE integration |
+| `streamScores()` | `GET /api/scores/stream` | available server-side for SSE integration |
 
 Requests send:
 
