@@ -36,9 +36,10 @@ type FixturesResponse =
     };
 
 const fixtureScopes: Array<{ value: FixtureScope; label: string }> = [
-  { value: "analysis", label: "Analysis Set" },
+  { value: "live", label: "Live Window" },
+  { value: "analysis", label: "Analysis" },
   { value: "completed", label: "Completed" },
-  { value: "upcoming", label: "Upcoming" },
+  { value: "scheduled", label: "Scheduled" },
 ];
 
 function fixtureStartMs(fixture?: NormalizedFixture) {
@@ -76,7 +77,7 @@ function buildMarket(
 
 export function LiveSnapshotPanel() {
   const [fixturesResponse, setFixturesResponse] = useState<FixturesResponse | null>(null);
-  const [fixtureScope, setFixtureScope] = useState<FixtureScope>("analysis");
+  const [fixtureScope, setFixtureScope] = useState<FixtureScope>("live");
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [odds, setOdds] = useState<LiveOddsSummary | undefined>();
   const [score, setScore] = useState<LiveScoreSummary | undefined>();
@@ -230,7 +231,7 @@ export function LiveSnapshotPanel() {
         ) : null}
 
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 overflow-hidden rounded-md border border-stone-700 bg-black/40">
+          <div className="grid grid-cols-2 overflow-hidden rounded-md border border-stone-700 bg-black/40 sm:grid-cols-4">
             {fixtureScopes.map((scope) => (
               <button
                 key={scope.value}
@@ -326,7 +327,7 @@ export function LiveSnapshotPanel() {
           ) : null}
 
           {hasLiveData && fixtures.length === 0 && !loadingFixtures ? (
-            <EmptyState title="No fixture in selected analysis scope">
+            <EmptyState title="No fixture in selected scope">
               The server route is authenticated, but TxLINE returned no World Cup fixture for the
               selected scope.
             </EmptyState>

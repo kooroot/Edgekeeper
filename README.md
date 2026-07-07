@@ -91,11 +91,12 @@ Production is configured as:
 
 Preview and local development can use devnet primary. If credentials are missing, public live routes return a clear credentials error instead of substituting synthetic fixture data.
 
-The fixture selector is analysis-oriented, not upcoming-only:
+The fixture selector separates live monitoring from scheduled future fixtures:
 
-- `Analysis Set`: World Cup fixture universe from recent historical matches through upcoming matches.
+- `Live Window`: fixtures that have recently started or are close enough to kickoff for live monitoring.
+- `Analysis`: World Cup fixture universe from recent historical matches through scheduled matches.
 - `Completed`: previously played fixtures for historical market-state review.
-- `Upcoming`: near-future fixtures for live monitoring.
+- `Scheduled`: future fixtures only.
 
 ### TxLINE Endpoints Used
 
@@ -103,7 +104,7 @@ EdgeKeeper's live path uses these TxLINE endpoints through `lib/txline/client.ts
 
 | TxLINE endpoint | EdgeKeeper route / use |
 | --- | --- |
-| `GET /api/fixtures/snapshot` | `GET /api/fixtures?scope=analysis|completed|upcoming`, fixture list for World Cup football markets |
+| `GET /api/fixtures/snapshot` | `GET /api/fixtures?scope=live|analysis|completed|scheduled`, fixture list for World Cup football markets |
 | `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]`, normalized 1X2 / match-winner odds points |
 | `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]`, normalized football score and stat state |
 | `GET /api/odds/snapshot/{fixtureId}` + `GET /api/scores/snapshot/{fixtureId}` | `POST /api/live-agent/[fixtureId]`, server-side live strategy tick with signal, risk, simulated action, and receipt |
@@ -153,11 +154,11 @@ Then open:
 http://localhost:3000/cockpit
 ```
 
-The cockpit fetches fixtures from TxLINE through server routes. Use `Analysis Set`, `Completed`, or `Upcoming` to choose the fixture universe, select a fixture if needed, then wait for the automatic 60-second agent tick or click `Run Agent Tick`.
+The cockpit fetches fixtures from TxLINE through server routes. Use `Live Window`, `Analysis`, `Completed`, or `Scheduled` to choose the fixture universe, select a fixture if needed, then wait for the automatic 60-second agent tick or click `Run Agent Tick`.
 
 Expected demo flow:
 
-1. Live and historical fixture names and fixture ids appear from `GET /api/fixtures?scope=analysis`.
+1. Live, historical, and scheduled fixture names appear from `GET /api/fixtures?scope=live|analysis|completed|scheduled`.
 2. Odds and score summaries load from `GET /api/odds/[fixtureId]` and `GET /api/scores/[fixtureId]`.
 3. The live agent tick reads those snapshots server-side.
 4. The signal engine emits a decision such as stale-feed guard, suspension guard, odds movement, or live market scan.

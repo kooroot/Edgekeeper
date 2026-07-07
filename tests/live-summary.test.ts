@@ -40,7 +40,7 @@ describe("live fixture summary", () => {
   it("can narrow the fixture universe to completed matches", () => {
     const preview = buildLiveFixturePreview({
       fixtures: [
-        fixture("past", "2026-07-06T18:00:00.000Z", "Ended"),
+        fixture("past", "2026-07-06T16:00:00.000Z", "Ended"),
         fixture("future", "2026-07-08T18:00:00.000Z"),
       ],
       network: "mainnet",
@@ -50,5 +50,31 @@ describe("live fixture summary", () => {
     });
 
     expect(preview.fixtures.map((item) => item.fixtureId)).toEqual(["past"]);
+  });
+
+  it("separates the live window from scheduled future fixtures", () => {
+    const fixtures = [
+      fixture("past", "2026-07-06T16:00:00.000Z"),
+      fixture("active", "2026-07-06T23:40:00.000Z"),
+      fixture("future", "2026-07-07T18:00:00.000Z"),
+    ];
+
+    const live = buildLiveFixturePreview({
+      fixtures,
+      network: "mainnet",
+      freeTiers,
+      now,
+      scope: "live",
+    });
+    const scheduled = buildLiveFixturePreview({
+      fixtures,
+      network: "mainnet",
+      freeTiers,
+      now,
+      scope: "scheduled",
+    });
+
+    expect(live.fixtures.map((item) => item.fixtureId)).toEqual(["active"]);
+    expect(scheduled.fixtures.map((item) => item.fixtureId)).toEqual(["future"]);
   });
 });

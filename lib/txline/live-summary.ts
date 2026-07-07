@@ -29,8 +29,10 @@ export type LiveScoreSummary = {
 
 const OUTCOME_SELECTIONS = new Set(["P1", "DRAW", "P2"]);
 const FINAL_STATUS_PATTERN = /(ended|finished|final|full\s*time|after\s+extra|penalt)/i;
+const LIVE_WINDOW_MS = 6 * 60 * 60 * 1000;
+const SCHEDULED_GRACE_MS = 15 * 60 * 1000;
 
-export type FixtureScope = "analysis" | "completed" | "upcoming";
+export type FixtureScope = "analysis" | "live" | "completed" | "scheduled";
 
 export function isOutcomeSelection(selection: string) {
   return OUTCOME_SELECTIONS.has(selection);
@@ -47,19 +49,30 @@ function isCompetitionFixture(fixture: NormalizedFixture, competitionId: number 
 }
 
 export function normalizeFixtureScope(value: string | null | undefined): FixtureScope {
-  if (value === "completed" || value === "upcoming") return value;
+  if (value === "live" || value === "completed" || value === "scheduled") return value;
+  if (value === "upcoming") return "scheduled";
   return "analysis";
 }
 
 function isCompletedFixture(fixture: NormalizedFixture, now: number) {
   if (fixture.status && FINAL_STATUS_PATTERN.test(fixture.status)) return true;
   const start = startMs(fixture);
-  return start > 0 && start < now - 2 * 60 * 60 * 1000;
+  return start > 0 && start < now - LIVE_WINDOW_MS;
 }
 
-function isUpcomingFixture(fixture: NormalizedFixture, now: number) {
+function isLiveWindowFixture(fixture: NormalizedFixture, now: number) {
   const start = startMs(fixture);
-  return start === 0 || start >= now - 6 * 60 * 60 * 1000;
+  return (
+    start > 0 &&
+    start >= now - LIVE_WINDOW_MS &&
+    start <= now + SCHEDULED_GRACE_MS &&
+    !isCompletedFixture(fixture, now)
+  );
+}
+
+function isScheduledFixture(fixture: NormalizedFixture, now: number) {
+  const start = startMs(fixture);
+  return start === 0 || start > now + SCHEDULED_GRACE_MS;
 }
 
 function sortFixtures(
@@ -71,7 +84,7 @@ function sortFixtures(
     const aStart = startMs(a);
     const bStart = startMs(b);
     if (scope === "completed") return bStart - aStart;
-    if (scope === "upcoming") return aStart - bStart;
+    if (scope === "scheduled") return aStart - bStart;
     return Math.abs(aStart - now) - Math.abs(bStart - now) || aStart - bStart;
   });
 }
@@ -97,8 +110,9 @@ export function buildLiveFixturePreview({
     .filter((fixture) => fixture.fixtureId !== "unknown-fixture")
     .filter((fixture) => isCompetitionFixture(fixture, competitionId));
   const scoped = competitionFixtures.filter((fixture) => {
+    if (scope === "live") return isLiveWindowFixture(fixture, now);
     if (scope === "completed") return isCompletedFixture(fixture, now);
-    if (scope === "upcoming") return isUpcomingFixture(fixture, now);
+    if (scope === "scheduled") return isScheduledFixture(fixture, now);
     return true;
   });
   const normalized = sortFixtures(scoped, scope, now);

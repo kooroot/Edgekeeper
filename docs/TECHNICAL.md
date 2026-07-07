@@ -37,7 +37,7 @@ It is not a `Prediction Markets and Settlement` project because it has no market
 
 | Criterion | Implementation evidence |
 | --- | --- |
-| Core Functionality & Data Ingestion | `app/api/fixtures?scope=analysis|completed|upcoming`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. `app/api/live-agent/[fixtureId]` consumes odds/scores snapshots and executes a defined strategy tick. |
+| Core Functionality & Data Ingestion | `app/api/fixtures?scope=live|analysis|completed|scheduled`, `app/api/odds/[fixtureId]`, and `app/api/scores/[fixtureId]` fetch TxLINE snapshots server-side and return normalized summaries. `app/api/live-agent/[fixtureId]` consumes odds/scores snapshots and executes a defined strategy tick. |
 | Autonomous Operation | `components/cockpit/LiveSnapshotPanel.tsx` runs the live agent tick automatically every 60 seconds for the selected fixture, with a manual tick button for demo timing. |
 | Logic & Code Architecture | `lib/agent/signals.ts`, `risk.ts`, `execution.ts`, `receipt.ts`, `state.ts`, and `live-agent.ts` keep deterministic strategy logic isolated and testable. |
 | Innovation & Novelty | Decision receipts combine signal input hashes, risk decisions, actions, and proof references so agent behavior is replayable and auditable. |
@@ -47,7 +47,7 @@ It is not a `Prediction Markets and Settlement` project because it has no market
 
 - Live app: `https://edgekeeper-kohl.vercel.app`
 - Public repo: `https://github.com/kooroot/Edgekeeper`
-- Demo path: `/cockpit` -> choose `Analysis Set`, `Completed`, or `Upcoming` -> select a fixture -> inspect market state -> run or wait for the agent tick -> inspect signal, risk decision, simulated action state, and receipt hash.
+- Demo path: `/cockpit` -> choose `Live Window`, `Analysis`, `Completed`, or `Scheduled` -> select a fixture -> inspect market state -> run or wait for the agent tick -> inspect signal, risk decision, simulated action state, and receipt hash.
 - Technical docs: this document.
 - TxLINE feedback: see `README.md`.
 
@@ -72,7 +72,7 @@ Excluded surfaces:
 
 ```txt
 browser
-  -> app/api/fixtures?scope=analysis|completed|upcoming
+  -> app/api/fixtures?scope=live|analysis|completed|scheduled
   -> app/api/odds/[fixtureId]
   -> app/api/scores/[fixtureId][?history=1]
   -> app/api/live-agent/[fixtureId][?history=1]
@@ -87,9 +87,10 @@ The live UI never receives TxLINE JWTs, API tokens, or raw downloadable feed dum
 
 Fixture scopes:
 
-- `analysis`: starts the TxLINE fixture snapshot 45 days back so previous matches and upcoming matches can be used as one analysis universe.
+- `live`: keeps fixtures in the live monitoring window, meaning recently started matches or fixtures close to kickoff.
+- `analysis`: starts the TxLINE fixture snapshot 45 days back so previous matches and scheduled matches can be used as one analysis universe.
 - `completed`: filters that universe to fixtures older than the live monitoring window or explicitly final.
-- `upcoming`: keeps the near-future monitoring set.
+- `scheduled`: future fixtures only.
 
 ## TxLINE Client
 
@@ -106,7 +107,7 @@ Endpoint mapping:
 
 | Client method | TxLINE endpoint | App-facing route |
 | --- | --- | --- |
-| `getFixturesSnapshot()` | `GET /api/fixtures/snapshot` | `GET /api/fixtures?scope=analysis|completed|upcoming` |
+| `getFixturesSnapshot()` | `GET /api/fixtures/snapshot` | `GET /api/fixtures?scope=live|analysis|completed|scheduled` |
 | `getOddsSnapshot(fixtureId)` | `GET /api/odds/snapshot/{fixtureId}` | `GET /api/odds/[fixtureId]` |
 | `getScoresSnapshot(fixtureId)` | `GET /api/scores/snapshot/{fixtureId}` | `GET /api/scores/[fixtureId]` |
 | `getHistoricalScores(fixtureId)` | `GET /api/scores/historical/{fixtureId}` | available server-side for backfill |

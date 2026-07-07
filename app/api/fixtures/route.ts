@@ -11,8 +11,11 @@ async function getFixturesForScope(
   client: ReturnType<typeof getTxLineClient>,
   scope: FixtureScope,
 ) {
-  if (scope === "upcoming") return client.getFixturesSnapshot();
   const currentEpochDay = Math.floor(Date.now() / 86_400_000);
+  if (scope === "scheduled") return client.getFixturesSnapshot();
+  if (scope === "live") {
+    return client.getFixturesSnapshot({ startEpochDay: currentEpochDay - 2 });
+  }
   return client.getFixturesSnapshot({ startEpochDay: currentEpochDay - 45 });
 }
 
