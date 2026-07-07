@@ -1,6 +1,7 @@
 import { Clock3, RadioTower } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import type { MarketState } from "@/lib/replay/replay-engine";
+import { countryWithFlag } from "@/lib/utils/country-flags";
 import { formatAge, formatClock, phaseLabel } from "@/lib/utils/time";
 
 function probability(point: MarketState["latestOdds"][number]) {
@@ -8,8 +9,8 @@ function probability(point: MarketState["latestOdds"][number]) {
 }
 
 function selectionName(selection: string, market: MarketState) {
-  if (selection === "P1") return market.fixture.participant1;
-  if (selection === "P2") return market.fixture.participant2;
+  if (selection === "P1") return countryWithFlag(market.fixture.participant1);
+  if (selection === "P2") return countryWithFlag(market.fixture.participant2);
   return selection;
 }
 
@@ -33,8 +34,12 @@ export function MarketStatePanel({ market }: { market: MarketState }) {
           <div className="font-mono text-[11px] uppercase text-stone-500">score</div>
           <div className="mt-2 flex items-end justify-between">
             <div>
-              <div className="text-sm text-stone-300">{market.fixture.participant1}</div>
-              <div className="text-sm text-stone-300">{market.fixture.participant2}</div>
+              <div className="text-sm text-stone-300">
+                {countryWithFlag(market.fixture.participant1)}
+              </div>
+              <div className="text-sm text-stone-300">
+                {countryWithFlag(market.fixture.participant2)}
+              </div>
             </div>
             <div className="font-mono text-4xl font-semibold text-white">{score}</div>
           </div>

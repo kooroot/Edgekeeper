@@ -13,6 +13,7 @@ import type {
   LiveScoreSummary,
 } from "@/lib/txline/live-summary";
 import type { NormalizedFixture } from "@/lib/txline/types";
+import { countryWithFlag } from "@/lib/utils/country-flags";
 import { MarketStatePanel } from "./MarketStatePanel";
 
 type FixturesResponse =
@@ -55,7 +56,9 @@ function isHistoricalFixture(fixture?: NormalizedFixture) {
 function fixtureLabel(fixture: NormalizedFixture) {
   const start = fixtureStartMs(fixture);
   const date = start > 0 ? new Date(start).toISOString().slice(0, 10) : "date n/a";
-  return `${fixture.participant1} vs ${fixture.participant2} · ${date} · ${fixture.fixtureId}`;
+  return `${countryWithFlag(fixture.participant1)} vs ${countryWithFlag(
+    fixture.participant2,
+  )} · ${date} · ${fixture.fixtureId}`;
 }
 
 function buildMarket(
