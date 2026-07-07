@@ -1,9 +1,28 @@
 import { getTxLineClient, getTxLineClients } from "@/lib/txline/client";
-import { buildLiveFixturePreview } from "@/lib/txline/live-summary";
+import {
+  buildLiveFixturePreview,
+  normalizeFixtureScope,
+  type FixtureScope,
+} from "@/lib/txline/live-summary";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function getFixturesForScope(
+  client: ReturnType<typeof getTxLineClient>,
+  scope: FixtureScope,
+) {
+  if (scope === "upcoming") return client.getFixturesSnapshot();
+  const currentEpochDay = Math.floor(Date.now() / 86_400_000);
+  return client.getFixturesSnapshot({ startEpochDay: currentEpochDay - 45 });
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const scope = normalizeFixtureScope(url.searchParams.get("scope"));
+  const requestedLimit = Number(url.searchParams.get("limit") ?? 120);
+  const limit = Number.isFinite(requestedLimit)
+    ? Math.min(160, Math.max(1, requestedLimit))
+    : 120;
   const clients = getTxLineClients();
 
   if (clients.length > 0) {
@@ -12,7 +31,7 @@ export async function GET() {
 
     for (const client of clients) {
       try {
-        const fixtures = await client.getFixturesSnapshot();
+        const fixtures = await getFixturesForScope(client, scope);
         return Response.json({
           mode: "live",
           credentialsAvailable: true,
@@ -23,6 +42,8 @@ export async function GET() {
             fixtures,
             network: client.network,
             freeTiers: client.config.freeServiceLevels,
+            limit,
+            scope,
           }),
         });
       } catch (error) {
@@ -58,6 +79,8 @@ export async function GET() {
         fixtures: [],
         network: client.network,
         freeTiers: client.config.freeServiceLevels,
+        limit,
+        scope,
       }),
     },
     { status: 503 },

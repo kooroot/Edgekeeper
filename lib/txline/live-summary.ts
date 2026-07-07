@@ -7,6 +7,7 @@ import type {
 export type LiveFixturePreview = {
   network: "devnet" | "mainnet";
   source: "TxLINE World Cup Free Tier";
+  scope: FixtureScope;
   count: number;
   fixtures: NormalizedFixture[];
   freeTiers: Array<{ serviceLevel: number; latency: string }>;
@@ -27,6 +28,9 @@ export type LiveScoreSummary = {
 };
 
 const OUTCOME_SELECTIONS = new Set(["P1", "DRAW", "P2"]);
+const FINAL_STATUS_PATTERN = /(ended|finished|final|full\s*time|after\s+extra|penalt)/i;
+
+export type FixtureScope = "analysis" | "completed" | "upcoming";
 
 export function isOutcomeSelection(selection: string) {
   return OUTCOME_SELECTIONS.has(selection);
@@ -42,13 +46,44 @@ function isCompetitionFixture(fixture: NormalizedFixture, competitionId: number 
   return fixture.competition?.trim().toLowerCase() === "world cup";
 }
 
+export function normalizeFixtureScope(value: string | null | undefined): FixtureScope {
+  if (value === "completed" || value === "upcoming") return value;
+  return "analysis";
+}
+
+function isCompletedFixture(fixture: NormalizedFixture, now: number) {
+  if (fixture.status && FINAL_STATUS_PATTERN.test(fixture.status)) return true;
+  const start = startMs(fixture);
+  return start > 0 && start < now - 2 * 60 * 60 * 1000;
+}
+
+function isUpcomingFixture(fixture: NormalizedFixture, now: number) {
+  const start = startMs(fixture);
+  return start === 0 || start >= now - 6 * 60 * 60 * 1000;
+}
+
+function sortFixtures(
+  fixtures: NormalizedFixture[],
+  scope: FixtureScope,
+  now: number,
+) {
+  return [...fixtures].sort((a, b) => {
+    const aStart = startMs(a);
+    const bStart = startMs(b);
+    if (scope === "completed") return bStart - aStart;
+    if (scope === "upcoming") return aStart - bStart;
+    return Math.abs(aStart - now) - Math.abs(bStart - now) || aStart - bStart;
+  });
+}
+
 export function buildLiveFixturePreview({
   fixtures,
   network,
   freeTiers,
-  limit = 12,
+  limit = 120,
   now = Date.now(),
   competitionId = 72,
+  scope = "analysis",
 }: {
   fixtures: NormalizedFixture[];
   network: "devnet" | "mainnet";
@@ -56,16 +91,22 @@ export function buildLiveFixturePreview({
   limit?: number;
   now?: number;
   competitionId?: number | string;
+  scope?: FixtureScope;
 }): LiveFixturePreview {
-  const normalized = fixtures
+  const competitionFixtures = fixtures
     .filter((fixture) => fixture.fixtureId !== "unknown-fixture")
-    .filter((fixture) => isCompetitionFixture(fixture, competitionId))
-    .filter((fixture) => startMs(fixture) === 0 || startMs(fixture) >= now - 6 * 60 * 60 * 1000)
-    .sort((a, b) => startMs(a) - startMs(b));
+    .filter((fixture) => isCompetitionFixture(fixture, competitionId));
+  const scoped = competitionFixtures.filter((fixture) => {
+    if (scope === "completed") return isCompletedFixture(fixture, now);
+    if (scope === "upcoming") return isUpcomingFixture(fixture, now);
+    return true;
+  });
+  const normalized = sortFixtures(scoped, scope, now);
 
   return {
     network,
     source: "TxLINE World Cup Free Tier",
+    scope,
     count: normalized.length,
     fixtures: normalized.slice(0, limit),
     freeTiers: freeTiers.map((tier) => ({

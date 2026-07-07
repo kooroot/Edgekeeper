@@ -6,7 +6,12 @@ import { Badge } from "@/components/common/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
 import type { LiveAgentTickResult } from "@/lib/agent/live-agent";
 import type { MarketState } from "@/lib/replay/replay-engine";
-import type { LiveFixturePreview, LiveOddsSummary, LiveScoreSummary } from "@/lib/txline/live-summary";
+import type {
+  FixtureScope,
+  LiveFixturePreview,
+  LiveOddsSummary,
+  LiveScoreSummary,
+} from "@/lib/txline/live-summary";
 import type { NormalizedFixture } from "@/lib/txline/types";
 import { MarketStatePanel } from "./MarketStatePanel";
 
@@ -26,8 +31,31 @@ type FixturesResponse =
       network: string;
       fallbackFrom?: string;
       error: string;
+      scope?: FixtureScope;
       fixtures: NormalizedFixture[];
     };
+
+const fixtureScopes: Array<{ value: FixtureScope; label: string }> = [
+  { value: "analysis", label: "Analysis Set" },
+  { value: "completed", label: "Completed" },
+  { value: "upcoming", label: "Upcoming" },
+];
+
+function fixtureStartMs(fixture?: NormalizedFixture) {
+  const parsed = fixture?.startTime ? Date.parse(fixture.startTime) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function isHistoricalFixture(fixture?: NormalizedFixture) {
+  const start = fixtureStartMs(fixture);
+  return start > 0 && start < Date.now() - 2 * 60 * 60 * 1000;
+}
+
+function fixtureLabel(fixture: NormalizedFixture) {
+  const start = fixtureStartMs(fixture);
+  const date = start > 0 ? new Date(start).toISOString().slice(0, 10) : "date n/a";
+  return `${fixture.participant1} vs ${fixture.participant2} · ${date} · ${fixture.fixtureId}`;
+}
 
 function buildMarket(
   fixture: NormalizedFixture,
@@ -48,6 +76,7 @@ function buildMarket(
 
 export function LiveSnapshotPanel() {
   const [fixturesResponse, setFixturesResponse] = useState<FixturesResponse | null>(null);
+  const [fixtureScope, setFixtureScope] = useState<FixtureScope>("analysis");
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [odds, setOdds] = useState<LiveOddsSummary | undefined>();
   const [score, setScore] = useState<LiveScoreSummary | undefined>();
@@ -57,7 +86,7 @@ export function LiveSnapshotPanel() {
   const [loadingAgentTick, setLoadingAgentTick] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fixtures = fixturesResponse?.fixtures ?? [];
+  const fixtures = useMemo(() => fixturesResponse?.fixtures ?? [], [fixturesResponse]);
   const selectedFixture =
     fixtures.find((fixture) => fixture.fixtureId === selectedFixtureId) ?? fixtures[0];
   const market = useMemo(
@@ -69,27 +98,37 @@ export function LiveSnapshotPanel() {
     setLoadingFixtures(true);
     setError(null);
     try {
-      const response = await fetch("/api/fixtures", { cache: "no-store" });
+      const response = await fetch(`/api/fixtures?scope=${fixtureScope}&limit=120`, {
+        cache: "no-store",
+      });
       const body = (await response.json()) as FixturesResponse;
       setFixturesResponse(body);
       if ("error" in body && body.error) setError(body.error);
       const nextFixtureId = body.fixtures?.[0]?.fixtureId ?? "";
-      setSelectedFixtureId((current) => current || nextFixtureId);
+      setSelectedFixtureId((current) =>
+        body.fixtures?.some((fixture) => fixture.fixtureId === current)
+          ? current
+          : nextFixtureId,
+      );
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Live fixtures request failed");
     } finally {
       setLoadingFixtures(false);
     }
-  }, []);
+  }, [fixtureScope]);
 
   const loadSnapshot = useCallback(async (fixtureId = selectedFixture?.fixtureId) => {
     if (!fixtureId) return;
     setLoadingSnapshot(true);
     setError(null);
     try {
+      const fixtureForSnapshot = fixtures.find((fixture) => fixture.fixtureId === fixtureId);
+      const historyParam = isHistoricalFixture(fixtureForSnapshot) ? "?history=1" : "";
       const [oddsResponse, scoreResponse] = await Promise.all([
         fetch(`/api/odds/${encodeURIComponent(fixtureId)}`, { cache: "no-store" }),
-        fetch(`/api/scores/${encodeURIComponent(fixtureId)}`, { cache: "no-store" }),
+        fetch(`/api/scores/${encodeURIComponent(fixtureId)}${historyParam}`, {
+          cache: "no-store",
+        }),
       ]);
       const oddsBody = (await oddsResponse.json()) as LiveOddsSummary & { error?: string };
       const scoreBody = (await scoreResponse.json()) as LiveScoreSummary & { error?: string };
@@ -102,14 +141,16 @@ export function LiveSnapshotPanel() {
     } finally {
       setLoadingSnapshot(false);
     }
-  }, [selectedFixture?.fixtureId]);
+  }, [fixtures, selectedFixture?.fixtureId]);
 
   const runAgentTick = useCallback(async (fixtureId = selectedFixture?.fixtureId) => {
     if (!fixtureId) return;
     setLoadingAgentTick(true);
     setError(null);
     try {
-      const response = await fetch(`/api/live-agent/${encodeURIComponent(fixtureId)}`, {
+      const fixtureForTick = fixtures.find((fixture) => fixture.fixtureId === fixtureId);
+      const historyParam = isHistoricalFixture(fixtureForTick) ? "?history=1" : "";
+      const response = await fetch(`/api/live-agent/${encodeURIComponent(fixtureId)}${historyParam}`, {
         cache: "no-store",
         method: "POST",
       });
@@ -121,7 +162,7 @@ export function LiveSnapshotPanel() {
     } finally {
       setLoadingAgentTick(false);
     }
-  }, [selectedFixture?.fixtureId]);
+  }, [fixtures, selectedFixture?.fixtureId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -154,6 +195,8 @@ export function LiveSnapshotPanel() {
   const hasLiveResponse = fixturesResponse?.mode === "live";
   const hasDirectCredentials = hasLiveResponse && fixturesResponse.credentialsAvailable === true;
   const hasLiveData = hasLiveResponse && hasDirectCredentials;
+  const fixtureCount =
+    fixturesResponse && "count" in fixturesResponse ? fixturesResponse.count : fixtures.length;
 
   return (
     <section className="grid gap-4 xl:grid-cols-[minmax(320px,0.8fr)_minmax(420px,1.2fr)]">
@@ -187,6 +230,29 @@ export function LiveSnapshotPanel() {
         ) : null}
 
         <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-3 overflow-hidden rounded-md border border-stone-700 bg-black/40">
+            {fixtureScopes.map((scope) => (
+              <button
+                key={scope.value}
+                type="button"
+                onClick={() => {
+                  setFixtureScope(scope.value);
+                  setSelectedFixtureId("");
+                  setOdds(undefined);
+                  setScore(undefined);
+                  setAgentTick(undefined);
+                }}
+                className={`h-10 px-2 text-xs font-semibold transition ${
+                  fixtureScope === scope.value
+                    ? "bg-cyan-300 text-black"
+                    : "text-stone-300 hover:bg-stone-900 hover:text-white"
+                }`}
+              >
+                {scope.label}
+              </button>
+            ))}
+          </div>
+
           <select
             value={selectedFixture?.fixtureId ?? ""}
             onChange={(event) => {
@@ -201,7 +267,7 @@ export function LiveSnapshotPanel() {
             {fixtures.length > 0 ? (
               fixtures.map((fixture) => (
                 <option key={fixture.fixtureId} value={fixture.fixtureId}>
-                  {fixture.participant1} vs {fixture.participant2} · {fixture.fixtureId}
+                  {fixtureLabel(fixture)}
                 </option>
               ))
             ) : (
@@ -239,6 +305,14 @@ export function LiveSnapshotPanel() {
             </button>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="cyan">{fixturesResponse?.scope ?? fixtureScope}</Badge>
+            <Badge tone="green">{fixtureCount} fixtures indexed</Badge>
+            {selectedFixture && isHistoricalFixture(selectedFixture) ? (
+              <Badge tone="amber">HISTORICAL SCORES</Badge>
+            ) : null}
+          </div>
+
           {error ? (
             <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm leading-6 text-red-100">
               {error}
@@ -252,9 +326,9 @@ export function LiveSnapshotPanel() {
           ) : null}
 
           {hasLiveData && fixtures.length === 0 && !loadingFixtures ? (
-            <EmptyState title="No live World Cup fixture in preview">
-              The server route is authenticated, but the filtered World Cup fixture preview returned no
-              upcoming fixtures.
+            <EmptyState title="No fixture in selected analysis scope">
+              The server route is authenticated, but TxLINE returned no World Cup fixture for the
+              selected scope.
             </EmptyState>
           ) : null}
         </div>

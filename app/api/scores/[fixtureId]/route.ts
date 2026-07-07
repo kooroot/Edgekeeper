@@ -1,13 +1,16 @@
 import { getTxLineClient, getTxLineClients } from "@/lib/txline/client";
 import { summarizeScores } from "@/lib/txline/live-summary";
+import type { NormalizedScoreUpdate } from "@/lib/txline/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ fixtureId: string }> },
 ) {
   const { fixtureId } = await params;
+  const url = new URL(request.url);
+  const preferHistorical = url.searchParams.get("history") === "1";
   const clients = getTxLineClients();
 
   if (clients.length > 0) {
@@ -16,12 +19,26 @@ export async function GET(
 
     for (const client of clients) {
       try {
-        const scores = await client.getScoresSnapshot(fixtureId);
+        let historicalFallback = false;
+        let scores: NormalizedScoreUpdate[] = [];
+        if (preferHistorical) {
+          try {
+            scores = await client.getHistoricalScores(fixtureId);
+          } catch {
+            historicalFallback = true;
+          }
+        }
+        if (scores.length === 0) {
+          historicalFallback = preferHistorical;
+          scores = await client.getScoresSnapshot(fixtureId);
+        }
         return Response.json({
           mode: "live",
           network: client.network,
           credentialsSource: client.credentialsSource,
           fallbackFrom,
+          historicalRequested: preferHistorical,
+          historicalFallback,
           fetchedAt: Date.now(),
           ...summarizeScores(scores, fixtureId),
         });

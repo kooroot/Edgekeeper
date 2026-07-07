@@ -4,10 +4,12 @@ import { getTxLineClients } from "@/lib/txline/client";
 export const dynamic = "force-dynamic";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ fixtureId: string }> },
 ) {
   const { fixtureId } = await params;
+  const url = new URL(request.url);
+  const preferHistorical = url.searchParams.get("history") === "1";
   const clients = getTxLineClients();
 
   if (clients.length === 0) {
@@ -28,7 +30,16 @@ export async function POST(
     try {
       const [odds, scores] = await Promise.all([
         client.getOddsSnapshot(fixtureId),
-        client.getScoresSnapshot(fixtureId),
+        (async () => {
+          if (!preferHistorical) return client.getScoresSnapshot(fixtureId);
+          try {
+            const historical = await client.getHistoricalScores(fixtureId);
+            if (historical.length > 0) return historical;
+          } catch {
+            // Historical score replay is optional in TxLINE; snapshot is the safe fallback.
+          }
+          return client.getScoresSnapshot(fixtureId);
+        })(),
       ]);
       const tick = runLiveAgentTick({
         fixtureId,

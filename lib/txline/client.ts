@@ -61,14 +61,17 @@ export class TxLineClient {
   }
 
   async getFixturesSnapshot(options: {
-    startEpochDay?: number;
+    startEpochDay?: number | null;
     competitionId?: number | string;
   } = {}): Promise<NormalizedFixture[]> {
-    const startEpochDay = options.startEpochDay ?? Math.floor(Date.now() / 86_400_000);
+    const startEpochDay =
+      options.startEpochDay === undefined
+        ? Math.floor(Date.now() / 86_400_000)
+        : options.startEpochDay;
     const competitionId = options.competitionId ?? 72;
-    const data = await this.fetchJson(
-      `/api/fixtures/snapshot?startEpochDay=${startEpochDay}&competitionId=${competitionId}`,
-    );
+    const params = new URLSearchParams({ competitionId: String(competitionId) });
+    if (startEpochDay !== null) params.set("startEpochDay", String(startEpochDay));
+    const data = await this.fetchJson(`/api/fixtures/snapshot?${params.toString()}`);
     return normalizeFixtures(data);
   }
 
