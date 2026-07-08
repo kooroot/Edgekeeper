@@ -7,3 +7,11 @@ keys/
 node_modules/
 coverage/
 *.tsbuildinfo
+*.mov
+*.mp4
+edgekeeper.en.srt
+edgekeeper.en.vtt
+caption-check/
+caption-overlays/
+caption-overlays-small/
+caption-filter*.txt
