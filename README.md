@@ -60,6 +60,7 @@ Submission requirements covered:
 - Public repo: https://github.com/kooroot/Edgekeeper
 - Application access: https://edgekeeper-kohl.vercel.app
 - Technical docs: [`docs/TECHNICAL.md`](docs/TECHNICAL.md)
+- Submission technical documentation: [`docs/SUBMISSION_TECHNICAL_DOCUMENTATION.md`](docs/SUBMISSION_TECHNICAL_DOCUMENTATION.md)
 - TxLINE API feedback: see the `TxLINE API Feedback For Submission` section below.
 
 Official references:
