@@ -165,6 +165,8 @@ Production is configured with:
 
 Preview and local development can use devnet primary credentials. If no credentials are available, the live API routes return explicit credential errors instead of substituting fake live data.
 
+Latency clarification: the 60-second value in EdgeKeeper documentation is the autonomous agent tick interval, not a statement that TxLINE odds streams are delayed. EdgeKeeper follows the current TxLINE subscription table: mainnet service level `12` is real-time and devnet service level `1` is listed as `0 seconds`. Obsolete IDL sampling-period fields are not used as feed-latency claims.
+
 Environment variables:
 
 ```txt

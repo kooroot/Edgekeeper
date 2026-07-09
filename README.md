@@ -208,7 +208,7 @@ Mainnet:
 bun run txline:issue:mainnet
 ```
 
-The script subscribes to the free World Cup / International Friendlies tiers and writes credentials into `.env.local`. It does not print JWT or API token values. Devnet uses service level `1`; mainnet defaults to service level `12` for real-time World Cup / International Friendlies free tier.
+The script subscribes to the free World Cup / International Friendlies tiers and writes credentials into `.env.local`. It does not print JWT or API token values. Devnet uses service level `1`, which the current TxLINE subscription table lists as `0 seconds`; mainnet defaults to service level `12` for the real-time World Cup / International Friendlies free tier. EdgeKeeper's 60-second value is the autonomous agent tick cadence, not a TxLINE feed-delay claim.
 
 ## Commands
 
@@ -246,6 +246,7 @@ Friction:
 - Response payloads can vary between PascalCase/camelCase and array/object shapes, so tolerant normalizers are necessary.
 - Odds selection labels are not always exactly `P1`, `DRAW`, `P2`, so the app needs selection mapping and unknown-market fallbacks.
 - Streaming support is useful, but the snapshot endpoints are enough for a judge-friendly autonomous agent tick because review may happen when match activity is stale.
+- The updated TxLINE docs clarified that obsolete IDL sampling-period fields should not be treated as odds-stream delay. EdgeKeeper now treats feed latency from the subscription table/API configuration and documents its 60-second value only as agent automation cadence.
 
 ## Judge Demo Script
 

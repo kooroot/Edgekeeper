@@ -3,7 +3,7 @@ export type TxlineNetwork = "devnet" | "mainnet";
 export type TxlineServiceLevel = {
   id: number;
   label: string;
-  latency: "60-second delay" | "real-time";
+  latency: "60-second delay" | "0 seconds" | "real-time";
 };
 
 export type TxlineNetworkConfig = {
@@ -24,7 +24,7 @@ const TXLINE_NETWORKS: Record<TxlineNetwork, TxlineNetworkConfig> = {
       {
         id: 1,
         label: "World Cup & Int Friendlies",
-        latency: "60-second delay",
+        latency: "0 seconds",
       },
     ],
   },

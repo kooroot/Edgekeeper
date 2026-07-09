@@ -124,6 +124,8 @@ X-Api-Token: ${TXLINE_API_TOKEN}
 
 The client supports a primary and secondary credential set. Production uses mainnet primary and devnet secondary fallback; development can use devnet primary.
 
+Latency note: EdgeKeeper does not infer live feed delay from obsolete IDL sampling-period fields. The current TxLINE subscription table lists mainnet service level `12` as real-time and devnet service level `1` as `0 seconds`; EdgeKeeper's 60-second value refers to the autonomous agent tick cadence only.
+
 ## Normalization
 
 The normalizers accept TxLINE-shaped payloads with PascalCase or camelCase keys and use tolerant parsing. The app works with normalized data structures:
